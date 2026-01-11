@@ -3,5 +3,4 @@
 //! 
 //! Main GUI.
 
-pub mod app;
 pub mod defaults;

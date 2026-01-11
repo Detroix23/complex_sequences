@@ -14,3 +14,5 @@ imgui = { git = "https://github.com/imgui-rs/imgui-rs", version = "0.12", featur
     "tables-api",
 ] }
 imgui-winit-support = { version = "0.13", git = "https://github.com/imgui-rs/imgui-winit-support" }
+
+complex_rust = { path = "../complex_rust" }

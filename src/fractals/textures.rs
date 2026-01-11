@@ -6,6 +6,7 @@ use std::{
 	borrow,
 	rc,
 	cell,
+	time,
 };
 
 use glium::{
@@ -17,12 +18,18 @@ use glium::{
 use imgui;
 use imgui_glium_renderer;
 
+use complex_rust as complex;
+
+
+use crate::fractals::divergence;
+
 /// # `FractalTexture`, drawing board for `imgui`.
 pub struct FractalTexture {
 	texture_id: Option<imgui::TextureId>,
 	/// Size: [width, height].
 	size: [f32; 2],
 	resolution: u32,
+	generation_time: Option<time::Duration>,
 }
 
 impl FractalTexture {
@@ -32,6 +39,7 @@ impl FractalTexture {
 			texture_id: Option::None, 
 			size: size, 
 			resolution: resolution,
+			generation_time: Option::None,
 		}))
 	}
 
@@ -50,10 +58,28 @@ impl FractalTexture {
 		let height: usize = self.size[0] as usize;
 
         if self.texture_id.is_none() {
-
+			
             // Texture generation.
-            let data = _generate_dummy_texture(width, height);
+			let generation_start: time::Instant = time::Instant::now();
+			
+			let fractal_table_mandelbrot = divergence::limit_of_each_point(
+				Default::default(), 
+				|z: complex::Algebraic, c: complex::Algebraic| { z * z + c },
+				2.0, 
+				100, 
+				[width, height],
+				[width / 2, height / 2],
+				0.008,
+			);
 
+            let data = divergence::convert_state_table_to_data(
+				fractal_table_mandelbrot, 
+				[0, 0, 0], 
+				[255, 255, 255],
+			);
+
+			self.generation_time = Option::Some(generation_start.elapsed());
+			
 			// Render (from `imgui-examples`, `custom_texture`).
             let raw = texture::RawImage2d {
                 data: borrow::Cow::Owned(data),
@@ -89,7 +115,7 @@ impl FractalTexture {
             .build(|| {
                 ui.text("Fractal texture. ");
                 if let Some(my_texture_id) = self.texture_id {
-                    ui.text("Current fractal: ");
+                    ui.text(format!("Current fractal ({:?}): ", self.generation_time));
                     imgui::Image::new(my_texture_id, self.size).build(ui);
                 }
 			});

@@ -10,4 +10,6 @@ fn main() {
     println!("# Complex sequences.");
 
     gui::defaults::launch_default();
+
+    eprintln!("(?) main::main() End !");
 }

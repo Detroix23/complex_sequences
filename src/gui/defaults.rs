@@ -14,7 +14,10 @@ use crate::fractals;
 /// Launch the default configuration for `App`. 
 pub fn launch_default() -> () {	
 	// Workers.
-	let fractal_texture = fractals::textures::FractalTexture::new([700.0, 500.0], 1);
+	let fractal_texture = fractals::textures::FractalTexture::new(
+		[600.0, 500.0], 
+		1
+	);
 	let fractal_texture_clone = fractal_texture.clone();
 
 	// True start.
