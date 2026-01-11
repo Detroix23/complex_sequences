@@ -20,10 +20,22 @@ mod clipboard;
 pub const FONT_SIZE: f32 = 13.0;
 
 pub fn simple_init<F: FnMut(&mut bool, &mut Ui) + 'static>(title: &str, run_ui: F) {
-    init_with_startup(title, |_, _, _| {}, run_ui);
+    init_with_startup(title, |_, _, _| {}, run_ui, [1024, 768]);
 }
 
-pub fn init_with_startup<FInit, FUi>(title: &str, mut startup: FInit, mut run_ui: FUi)
+/// # Initialize a `imgui`, `event_loop`, `Window`, `Render`.
+/// 
+/// ## Arguments in:
+/// - `title`: &str, title of the window,
+/// - `startup`: FInit, closure executed on the very first frame of the application,
+/// - `run_ui`: FUi, closure run every loop of the `event_loop`,
+/// - `window_size`: [u32; 2], [width, height],
+pub fn init_with_startup<FInit, FUi>(
+    title: &str, 
+    mut startup: FInit, 
+    mut run_ui: FUi,
+    window_size: [u32; 2],
+)
 where
     FInit: FnMut(&mut Context, &mut Renderer, &Display<WindowSurface>) + 'static,
     FUi: FnMut(&mut bool, &mut Ui) + 'static,
@@ -34,15 +46,19 @@ where
         Some(file_name) => file_name.to_str().unwrap(),
         None => title,
     };
-    let event_loop = EventLoop::new().expect("Failed to create EventLoop");
+    let event_loop = EventLoop::new()
+        .expect("(!) support::mod::init_with_startup() - Failed to create EventLoop");
 
     let window_attributes = WindowAttributes::default()
         .with_title(title)
-        .with_inner_size(LogicalSize::new(1024, 768));
+        .with_inner_size(LogicalSize::new(window_size[0], window_size[1]));
+    
     let (window, display) = glium::backend::glutin::SimpleWindowBuilder::new()
         .set_window_builder(window_attributes)
         .build(&event_loop);
-    let mut renderer = Renderer::new(&mut imgui, &display).expect("Failed to initialize renderer");
+    
+    let mut renderer = Renderer::new(&mut imgui, &display)
+        .expect("(!) support::mod::init_with_startup() - Failed to initialize renderer");
 
     if let Some(backend) = clipboard::init() {
         imgui.set_clipboard_backend(backend);
@@ -77,12 +93,14 @@ where
                 imgui.io_mut().update_delta_time(now - last_frame);
                 last_frame = now;
             }
+
             Event::AboutToWait => {
                 platform
                     .prepare_frame(imgui.io_mut(), &window)
-                    .expect("Failed to prepare frame");
+                    .expect("(!) support::mod::init_with_startup() - Failed to prepare frame");
                 window.request_redraw();
             }
+
             Event::WindowEvent {
                 event: WindowEvent::RedrawRequested,
                 ..
@@ -101,8 +119,8 @@ where
                 let draw_data = imgui.render();
                 renderer
                     .render(&mut target, draw_data)
-                    .expect("Rendering failed");
-                target.finish().expect("Failed to swap buffers");
+                    .expect("(!) support::mod::init_with_startup() - Rendering failed");
+                target.finish().expect("(!) support::mod::init_with_startup() - Failed to swap buffers");
             }
             Event::WindowEvent {
                 event: WindowEvent::Resized(new_size),
@@ -121,7 +139,7 @@ where
                 platform.handle_event(imgui.io_mut(), &window, &event);
             }
         })
-        .expect("EventLoop error");
+        .expect("(!) support::mod::init_with_startup() - EventLoop error");
 }
 
 /// Creates the imgui context

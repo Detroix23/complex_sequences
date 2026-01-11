@@ -3,6 +3,7 @@
 		"glium",
 		"glutin",
 		"imgui",
+		"namespacing",
 		"srgb",
 		"winit"
 	]
