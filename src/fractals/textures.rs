@@ -18,7 +18,7 @@ use imgui;
 use imgui_glium_renderer;
 
 /// # `FractalTexture`, drawing board for `imgui`.
-struct FractalTexture {
+pub struct FractalTexture {
 	texture_id: Option<imgui::TextureId>,
 	/// Size: [width, height].
 	size: [f32; 2],
@@ -27,7 +27,7 @@ struct FractalTexture {
 
 impl FractalTexture {
 	/// Instantiate and returns a link to a new `FractalTexture`.
-	fn new(size: [f32; 2], resolution: u32) -> rc::Rc<cell::RefCell<FractalTexture>> {
+	pub fn new(size: [f32; 2], resolution: u32) -> rc::Rc<cell::RefCell<FractalTexture>> {
 		rc::Rc::new(cell::RefCell::new(FractalTexture { 
 			texture_id: Option::None, 
 			size: size, 
@@ -36,35 +36,29 @@ impl FractalTexture {
 	}
 
 	/// Generate and register the fractal texture.
-	fn register_texture<F>(
+	/// 
+	/// Source: `imgui-examples`, `custom_texture`
+	pub fn register_texture<F>(
         &mut self,
         gl_ctx: &F,
         textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
     ) -> Result<(), Box<dyn error::Error>>
     where
         F: backend::Facade,
-    {
-		let height: usize = self.size[0] as usize;
+    {	
 		let width: usize = self.size[1] as usize;
+		let height: usize = self.size[0] as usize;
 
         if self.texture_id.is_none() {
 
             // Texture generation.
-            let mut data = Vec::with_capacity(height * width);
-            for y in 0..height {
-                for x in 0..width {
-                    // Insert RGB values
-                    data.push((y % 255) as u8);
-                    data.push(((x * x) % 255) as u8);
-                    data.push(((y + x) % 255) as u8);
-                }
-            }
+            let data = _generate_dummy_texture(width, height);
 
-			// Render.
+			// Render (from `imgui-examples`, `custom_texture`).
             let raw = texture::RawImage2d {
                 data: borrow::Cow::Owned(data),
-                width: height as u32,
-                height: width as u32,
+                width: width as u32,
+                height: height as u32,
                 format: texture::ClientFormat::U8U8U8,
             };
 
@@ -87,15 +81,38 @@ impl FractalTexture {
 	}
 
 	/// Calls `window` method on `ui`, to display the texture. 
-	fn show_textures(&self, ui: &imgui::Ui) {
-        ui.window("Hello textures")
+	/// 
+	/// Source: `imgui-examples`, `custom_texture`
+	pub fn show_textures(&self, ui: &imgui::Ui) {
+        ui.window("Fractal. ")
             .size([400.0, 400.0], imgui::Condition::FirstUseEver)
             .build(|| {
-                ui.text("Hello textures!");
+                ui.text("Fractal texture. ");
                 if let Some(my_texture_id) = self.texture_id {
-                    ui.text("Some generated texture");
+                    ui.text("Current fractal: ");
                     imgui::Image::new(my_texture_id, self.size).build(ui);
                 }
 			});
 	}
+}
+
+/// Generate a blue screen with a red square 1/ 4 at the bottom right corner.
+fn _generate_dummy_texture(width: usize, height: usize) -> Vec<u8> {
+	let mut data: Vec<u8> = Vec::with_capacity(width * height);
+
+	for y in 0..height {
+		for x in 0..width {
+			if x > (width / 2) && y > (height / 2) {
+				data.push(255);
+				data.push(0);
+				data.push(0);
+			} else {
+				data.push(0);
+				data.push(0);
+				data.push(255);
+			}
+		}
+	}
+
+	data
 }

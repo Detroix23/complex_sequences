@@ -11,6 +11,7 @@ use crate::support;
 
 /// # `App` for complex sequences.
 /// Holds the state, and the graphics.
+#[deprecated(note="Closures in generic types mismatch. Switched to functional.")]
 pub struct App<FStart, FRun>
 where
 	FStart: FnMut(&mut imgui::Context, &mut imgui_glium_renderer::Renderer, &glium::Display<glium::glutin::surface::WindowSurface>) + 'static,

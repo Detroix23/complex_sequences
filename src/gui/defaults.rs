@@ -4,60 +4,53 @@
 //! Defaults settings for the `App`.
 
 use glium;
+use glium::backend::Facade;
 use imgui;
 
-use crate::gui::app;
+use crate::support;
+use crate::fractals;
+
 
 /// Launch the default configuration for `App`. 
 pub fn launch_default() -> () {	
-	// &mut imgui::Context, &mut imgui_glium_renderer::Renderer, &glium::Display<glium::glutin::surface::WindowSurface>
-	let startup = |
-		context: &mut imgui::Context, 
-		renderer: &mut imgui_glium_renderer::Renderer, 
-		display: &glium::Display<glium::glutin::surface::WindowSurface>,
-	| {
+	// Workers.
+	let fractal_texture = fractals::textures::FractalTexture::new([700.0, 500.0], 1);
+	let fractal_texture_clone = fractal_texture.clone();
 
-	};
+	// True start.
+	support::init_with_startup( 
+		"Complex sequences. ", 
 
-	let run_ui = |_, ui: &mut imgui::Ui| {
-		
+		move |
+			context: &mut imgui::Context, 
+			renderer: &mut imgui_glium_renderer::Renderer, 
+			display: &glium::Display<glium::glutin::surface::WindowSurface>,
+		| {
+			println!("(?) gui::defaults::launch_default() Initialized.");
+
+			fractal_texture_clone
+				.borrow_mut()
+				.register_texture(display.get_context(), renderer.textures())
+				.expect("(!) gui::default::launch_default() startup: can't register texture.");
+		}, 
+
+		move|
+			_, 
+			ui: &mut imgui::Ui
+		| {
 		// Window: settings.
-		ui.window("Settings.")
-			.size([150.0, 250.0], imgui::Condition::FirstUseEver)
-			.position([100.0, 100.0], imgui::Condition::FirstUseEver)
-			.build(|| {
-				ui.text_wrapped("This is the settings window.");	
-			});
+			ui.window("Settings.")
+				.size([150.0, 250.0], imgui::Condition::FirstUseEver)
+				.position([100.0, 100.0], imgui::Condition::FirstUseEver)
+				.build(|| {
+					ui.text_wrapped("This is the settings window.");	
+				});
+			
+			fractal_texture
+				.borrow_mut()
+				.show_textures(ui);
+		},
 
-	};
-	
-	
-	let my_app = app::App::new( 
-		"Complex sequences. ".to_string(), 
-		startup, 
-		run_ui,
 		[1024, 768],
 	);
-
-	my_app.start();
 }
-
-/* Texture init.
-```
-let my_app = std::rc::Rc::new(std::cell::RefCell::new(CustomTexturesApp::default()));
-let app_clone = my_app.clone();
-
-support::init_with_startup(
-	file!(),
-	move |_ctx, renderer, display| {
-		app_clone
-			.borrow_mut()
-			.register_textures(display.get_context(), renderer.textures())
-			.expect("Failed to register textures");
-	},
-	move |_, ui| {
-		my_app.borrow_mut().show_textures(ui);
-	},
-);
-```
-*/
