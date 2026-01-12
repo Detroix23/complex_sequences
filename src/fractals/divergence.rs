@@ -24,7 +24,7 @@ pub fn limit<F>(
 	c: complex::Algebraic, 
 	z: complex::Algebraic, 
 	f: F, 
-	threshold: complex::Number, 
+	threshold: complex::Real, 
 	iterations: usize,
 ) -> State 
 where
@@ -49,11 +49,11 @@ where
 pub fn limit_of_each_point<F>(
 	z: complex::Algebraic,
 	f: F,
-	threshold: complex::Number, 
+	threshold: complex::Real, 
 	iterations: usize,
 	size: [usize; 2],
 	position: [usize; 2],
-	zoom: complex::Number,
+	zoom: complex::Real,
 ) -> Vec<Vec<State>>
 where
 	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic,
@@ -65,8 +65,8 @@ where
 		for x in 0..size[0] {
 			line.push(limit(
 				complex::Algebraic::new(
-					(x as complex::Number - (position[0]) as complex::Number) * zoom, 
-					(y as complex::Number - (position[1]) as complex::Number) * zoom,
+					(x as complex::Real - (position[0]) as complex::Real) * zoom, 
+					(y as complex::Real - (position[1]) as complex::Real) * zoom,
 				),
 				z,
 				&f,

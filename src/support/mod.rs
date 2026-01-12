@@ -5,7 +5,7 @@
 
 use glium::glutin::surface::WindowSurface;
 use glium::{Display, Surface};
-use imgui::{Context, FontConfig, FontGlyphRanges, FontSource, Ui};
+use imgui::{Context, FontConfig, FontSource, Ui};
 use imgui_glium_renderer::Renderer;
 use imgui_winit_support::winit::dpi::LogicalSize;
 use imgui_winit_support::winit::event::{Event, WindowEvent};
@@ -19,10 +19,6 @@ mod clipboard;
 
 pub const FONT_SIZE: f32 = 13.0;
 
-pub fn simple_init<F: FnMut(&mut bool, &mut Ui) + 'static>(title: &str, run_ui: F) {
-    init_with_startup(title, |_, _, _| {}, run_ui, [1024, 768]);
-}
-
 /// # Initialize a `imgui`, `event_loop`, `Window`, `Render`.
 /// 
 /// ## Arguments in:
@@ -30,15 +26,17 @@ pub fn simple_init<F: FnMut(&mut bool, &mut Ui) + 'static>(title: &str, run_ui: 
 /// - `startup`: FInit, closure executed on the very first frame of the application,
 /// - `run_ui`: FUi, closure run every loop of the `event_loop`,
 /// - `window_size`: [u32; 2], [width, height],
-pub fn init_with_startup<FInit, FUi>(
+pub fn init_with_startup<FInit, FUi, FUpdate>(
     title: &str, 
+    window_size: [u32; 2],
     mut startup: FInit, 
     mut run_ui: FUi,
-    window_size: [u32; 2],
+    mut update: FUpdate,
 )
 where
     FInit: FnMut(&mut Context, &mut Renderer, &Display<WindowSurface>) + 'static,
-    FUi: FnMut(&mut bool, &mut Ui) + 'static,
+    FUi: FnMut(&mut bool, &mut Ui, &mut Renderer, &Display<WindowSurface>) + 'static,
+    FUpdate: FnMut(&mut Renderer, &Display<WindowSurface>) + 'static,
 {
     let mut imgui = create_context();
 
@@ -108,10 +106,12 @@ where
                 let ui = imgui.frame();
 
                 let mut run = true;
-                run_ui(&mut run, ui);
+                run_ui(&mut run, ui, &mut renderer, &display);
                 if !run {
                     window_target.exit();
                 }
+
+                update(&mut renderer, &display);
 
                 let mut target = display.draw();
                 target.clear_color_srgb(1.0, 1.0, 1.0, 1.0);
@@ -122,6 +122,7 @@ where
                     .expect("(!) support::mod::init_with_startup() - Rendering failed");
                 target.finish().expect("(!) support::mod::init_with_startup() - Failed to swap buffers");
             }
+
             Event::WindowEvent {
                 event: WindowEvent::Resized(new_size),
                 ..
@@ -131,10 +132,12 @@ where
                 }
                 platform.handle_event(imgui.io_mut(), &window, &event);
             }
+
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
                 ..
             } => window_target.exit(),
+            
             event => {
                 platform.handle_event(imgui.io_mut(), &window, &event);
             }
