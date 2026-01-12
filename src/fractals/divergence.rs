@@ -66,8 +66,8 @@ where
 		for x in 0..size[0] {
 			line.push(limit(
 				complex::Algebraic::new(
-					(x as complex::Real - position[0] as complex::Real) * zoom, 
-					(y as complex::Real - position[1] as complex::Real) * zoom,
+					(x as complex::Real - size[0] as complex::Real / 2.0) / zoom - position[0], 
+					(y as complex::Real - size[0] as complex::Real / 2.0) / zoom - position[1],
 				),
 				z,
 				&f,

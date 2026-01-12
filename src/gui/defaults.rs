@@ -78,14 +78,14 @@ pub fn launch_default() -> () {
 					}
 
 					// Zoom slider.
-                    ui.slider_config("Zoom", 0.00000001, 1.0)
+                    ui.slider_config("Zoom", 1.0, 100000.0)
                         .flags(imgui::SliderFlags::LOGARITHMIC)
                         .build(&mut fractal_texture.borrow_mut().zoom);
 
 					// (x; y).
-					ui.slider_config("x", -1000.0, 1000.0)
+					ui.slider_config("x", -5.0, 5.0)
                         .build(&mut fractal_texture.borrow_mut().position[0]);
-					ui.slider_config("y", -1000.0, 1000.0)
+					ui.slider_config("y", -5.0, 5.0)
                         .build(&mut fractal_texture.borrow_mut().position[1]);
 
 					// Iterations.
