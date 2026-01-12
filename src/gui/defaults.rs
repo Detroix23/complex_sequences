@@ -15,6 +15,7 @@ use crate::fractals;
 pub fn launch_default() -> () {	
 	// Workers.
 	let fractal_texture = fractals::textures::FractalTexture::new(
+		|z, c| { z * z + c },
 		[600.0, 600.0], 
 		1,
 		0.08,
@@ -58,7 +59,12 @@ pub fn launch_default() -> () {
 				.position([100.0, 100.0], imgui::Condition::FirstUseEver)
 				.build(|| {
 					ui.text("## Info");
-					ui.text(format!("- Threshold: {}", fractal_texture.borrow().threshold));
+					ui.text(format!(
+						"- Position: ({}; {})", 
+						fractal_texture.borrow().position[0], 
+						fractal_texture.borrow().position[1]
+					));
+
 
 					ui.separator();
 
@@ -85,6 +91,10 @@ pub fn launch_default() -> () {
 					// Iterations.
 					ui.slider_config("Iteration", 1_usize, 250_usize)
 						.build(&mut fractal_texture.borrow_mut().iterations);
+
+					// Threshold for divergence.
+					ui.slider_config("Threshold", 0.0, 5.0)
+						.build(&mut fractal_texture.borrow_mut().threshold);
 
 				});
 			

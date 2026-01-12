@@ -24,7 +24,11 @@ use complex_rust as complex;
 use crate::fractals::divergence;
 
 /// # `FractalTexture`, drawing board for `imgui`.
-pub struct FractalTexture {
+pub struct FractalTexture<F> 
+where
+	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic,
+{
+	function: F,
 	texture_id: Option<imgui::TextureId>,
 	
 	/// Size: [width, height].
@@ -42,15 +46,20 @@ pub struct FractalTexture {
 	zoom_last: complex::Real,
 	position_last: [complex::Real; 2],
 	iterations_last: usize,
+	threshold_last: complex::Real,
 
 	/// Graphics.
 	color_stable: [u8; 3],
 	color_divergent: [u8; 3],
 }
 
-impl FractalTexture {
+impl<F> FractalTexture<F> 
+where
+	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Copy
+{
 	/// Instantiate and returns a link to a new `FractalTexture`.
 	pub fn new(
+		function: F,
 		size: [complex::Real; 2], 
 		resolution: u32,
 		zoom: complex::Real,
@@ -58,8 +67,9 @@ impl FractalTexture {
 		threshold: complex::Real,
 		color_stable: [u8; 3],
 		color_divergent: [u8; 3],
-	) -> rc::Rc<cell::RefCell<FractalTexture>> {
-		rc::Rc::new(cell::RefCell::new(FractalTexture { 
+	) -> rc::Rc<cell::RefCell<FractalTexture<F>>> {
+		rc::Rc::new(cell::RefCell::new(FractalTexture {
+			function,
 			texture_id: Option::None, 
 			size, 
 			resolution,
@@ -72,6 +82,7 @@ impl FractalTexture {
 			zoom_last: 1.0,
 			position_last: [0.0, 0.0],
 			iterations_last: 0,
+			threshold_last: 0.0,
 
 			color_stable,
 			color_divergent,
@@ -81,13 +92,13 @@ impl FractalTexture {
 	/// Generate and register the fractal texture.
 	/// 
 	/// Source: `imgui-examples`, `custom_texture`
-	pub fn register_texture<F>(
+	pub fn register_texture<Facade>(
         &mut self,
-        gl_context: &F,
+        gl_context: &Facade,
         textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
     ) -> Result<(), Box<dyn error::Error>>
     where
-        F: backend::Facade,
+        Facade: backend::Facade,
     {	
 		let size: [usize; 2] = [self.size[0] as usize, self.size[1] as usize];
 			
@@ -96,7 +107,7 @@ impl FractalTexture {
 
 		let fractal_table_mandelbrot = divergence::limit_of_each_point(
 			Default::default(), 
-			|z: complex::Algebraic, c: complex::Algebraic| { z * z + c },
+			self.function,
 			self.threshold, 
 			self.iterations, 
 			size,
@@ -190,6 +201,9 @@ impl FractalTexture {
 		} else if self.iterations != self.iterations_last {
 			updated = true;
 			self.iterations_last = self.iterations;
+		} else if self.threshold != self.threshold_last {
+			updated = true;
+			self.threshold_last = self.threshold;
 		}
 
 		updated
