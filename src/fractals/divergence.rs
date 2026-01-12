@@ -6,7 +6,8 @@ use complex_rust as complex;
 /// # Divergence `State`.
 /// Tell if a function explode toward infinity or remains bounded.
 pub enum State {
-	Divergent,
+	/// Divergent: in how many `iterations` does it diverged. 
+	Divergent{ iterations: usize },
 	Stable
 }
 
@@ -41,7 +42,7 @@ where
 	if current.absolute() <= threshold {
 		State::Stable
 	} else {
-		State::Divergent
+		State::Divergent { iterations: counter }
 	}
 }
 
@@ -52,7 +53,7 @@ pub fn limit_of_each_point<F>(
 	threshold: complex::Real, 
 	iterations: usize,
 	size: [usize; 2],
-	position: [usize; 2],
+	position: [complex::Real; 2],
 	zoom: complex::Real,
 ) -> Vec<Vec<State>>
 where
@@ -65,8 +66,8 @@ where
 		for x in 0..size[0] {
 			line.push(limit(
 				complex::Algebraic::new(
-					(x as complex::Real - (position[0]) as complex::Real) * zoom, 
-					(y as complex::Real - (position[1]) as complex::Real) * zoom,
+					(x as complex::Real - position[0] as complex::Real) * zoom, 
+					(y as complex::Real - position[1] as complex::Real) * zoom,
 				),
 				z,
 				&f,
@@ -83,20 +84,23 @@ where
 	grid
 }
 
+/// Convert a 2D `table`: `Vec<Vec<State>>` into `Vec<u8>` of raw `data`. 
 pub fn convert_state_table_to_data(
 	table: Vec<Vec<State>>, 
 	stable: [u8; 3], 
 	divergent: [u8; 3],
+	iterations_max: usize,
 ) -> Vec<u8> {
 	let mut data: Vec<u8> = Vec::new();
 
 	for line in table {
 		for state in line {
 			match state {
-				State::Divergent => {
-					data.push(divergent[0]);
-					data.push(divergent[1]);
-					data.push(divergent[2]);
+				State::Divergent{ iterations} => {
+
+					data.push((divergent[0] as usize * iterations / iterations_max) as u8);
+					data.push((divergent[1] as usize * iterations / iterations_max) as u8);
+					data.push((divergent[2] as usize * iterations / iterations_max) as u8);
 				},
 				State::Stable => {
 					data.push(stable[0]);

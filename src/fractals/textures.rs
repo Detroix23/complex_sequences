@@ -26,24 +26,55 @@ use crate::fractals::divergence;
 /// # `FractalTexture`, drawing board for `imgui`.
 pub struct FractalTexture {
 	texture_id: Option<imgui::TextureId>,
+	
 	/// Size: [width, height].
-	size: [complex::Real; 2],
-	resolution: u32,
 	generation_time: Option<time::Duration>,
-	position: [complex::Real; 2],
+
+	/// Parameters.
+	pub size: [complex::Real; 2],
+	pub resolution: u32,
+	pub position: [complex::Real; 2],
 	pub zoom: complex::Real,
+	pub iterations: usize,
+	pub threshold: complex::Real,
+
+	// Variables to check if state is modified.
+	zoom_last: complex::Real,
+	position_last: [complex::Real; 2],
+	iterations_last: usize,
+
+	/// Graphics.
+	color_stable: [u8; 3],
+	color_divergent: [u8; 3],
 }
 
 impl FractalTexture {
 	/// Instantiate and returns a link to a new `FractalTexture`.
-	pub fn new(size: [complex::Real; 2], resolution: u32) -> rc::Rc<cell::RefCell<FractalTexture>> {
+	pub fn new(
+		size: [complex::Real; 2], 
+		resolution: u32,
+		zoom: complex::Real,
+		iterations: usize,
+		threshold: complex::Real,
+		color_stable: [u8; 3],
+		color_divergent: [u8; 3],
+	) -> rc::Rc<cell::RefCell<FractalTexture>> {
 		rc::Rc::new(cell::RefCell::new(FractalTexture { 
 			texture_id: Option::None, 
-			size: size, 
-			resolution: resolution,
+			size, 
+			resolution,
 			generation_time: Option::None,
 			position: [size[0] / 2.0, size[1] / 2.0],
-			zoom: 0.08,
+			zoom,
+			iterations,
+			threshold,
+
+			zoom_last: 1.0,
+			position_last: [0.0, 0.0],
+			iterations_last: 0,
+
+			color_stable,
+			color_divergent,
 		}))
 	}
 
@@ -59,25 +90,25 @@ impl FractalTexture {
         F: backend::Facade,
     {	
 		let size: [usize; 2] = [self.size[0] as usize, self.size[1] as usize];
-		let position: [usize; 2] = [self.position[0] as usize, self.position[1] as usize];
 			
 		// Texture generation.
 		let generation_start: time::Instant = time::Instant::now();
-		
+
 		let fractal_table_mandelbrot = divergence::limit_of_each_point(
 			Default::default(), 
 			|z: complex::Algebraic, c: complex::Algebraic| { z * z + c },
-			2.0, 
-			100, 
+			self.threshold, 
+			self.iterations, 
 			size,
-			position,
+			self.position,
 			self.zoom,
 		);
 
 		let data = divergence::convert_state_table_to_data(
 			fractal_table_mandelbrot, 
-			[0, 0, 0], 
-			[255, 255, 255],
+			self.color_stable,
+			self.color_divergent,
+			self.iterations,
 		);
 
 		self.generation_time = Option::Some(generation_start.elapsed());
@@ -129,71 +160,39 @@ impl FractalTexture {
                 ui.text("Fractal texture. ");
                 
 				if let Some(my_texture_id) = self.texture_id {
-                    ui.text(format!("Current fractal (in {:?}): ", self.generation_time));
+                    match self.generation_time {
+						Option::None => {
+							ui.text(format!("Current fractal: "));
+						},
+						Option::Some(generation_time) => {
+							ui.text(format!("Current fractal (in {:?}): ", generation_time));
+						}
+					}
                     
 					imgui::Image::new(my_texture_id, self.size)
 						.build(ui);
                 }
 			});
 	}
+	
+	/// Check the fields of the `FractalTexture` versus their `last` counterpart.
+	/// 
+	/// Returns `true` if any of them is different.
+	pub fn is_state_updated(self: &mut Self) -> bool {
+		let mut updated: bool = false;
 
-	/// Update the size. If `self.size` and `new` differ, update the texture.
-	pub fn update_size<F>(
-		self: &mut Self, 
-		new: &[complex::Real; 2],
-		gl_context: &F,
-        textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
-    ) -> Result<(), Box<dyn error::Error>>
-    where
-        F: backend::Facade,
-	{
-		if self.size[0] != new[0] && self.size[1] != new[1] {
-			self.size = *new;
-			self.register_texture(gl_context, textures)
-		} else {
-			Result::Ok(())
+		if self.zoom != self.zoom_last {
+			updated = true;
+			self.zoom_last = self.zoom;
+		} else if self.position != self.position_last {
+			updated = true;
+			self.position_last = self.position;
+		} else if self.iterations != self.iterations_last {
+			updated = true;
+			self.iterations_last = self.iterations;
 		}
+
+		updated
 	}
 
-	/// Update the size. If `self.size` and `new` differ, update the texture.
-	pub fn update_zoom<F>(
-		self: &mut Self, 
-		new: &complex::Real,
-		gl_context: &F,
-        textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
-    ) -> Result<(), Box<dyn error::Error>>
-    where
-        F: backend::Facade,
-	{
-		eprintln!("(?) fractals::textures::FractalTexture.update_zoom() zoom={}, new={}",  self.zoom, new);
-
-		if self.zoom != *new {
-			self.zoom = *new;
-			self.register_texture(gl_context, textures)
-		} else {
-			Result::Ok(())
-		}
-	}
-
-}
-
-/// Generate a blue screen with a red square 1/ 4 at the bottom right corner.
-fn _generate_dummy_texture(width: usize, height: usize) -> Vec<u8> {
-	let mut data: Vec<u8> = Vec::with_capacity(width * height);
-
-	for y in 0..height {
-		for x in 0..width {
-			if x > (width / 2) && y > (height / 2) {
-				data.push(255);
-				data.push(0);
-				data.push(0);
-			} else {
-				data.push(0);
-				data.push(0);
-				data.push(255);
-			}
-		}
-	}
-
-	data
 }
