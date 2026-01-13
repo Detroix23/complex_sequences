@@ -6,17 +6,20 @@
 use glium;
 use glium::backend::Facade;
 use imgui;
+use complex_rust as complex;
 
 use crate::support;
 use crate::fractals;
-
+use crate::gui::settings;
 
 /// Launch the default configuration for `App`. 
 pub fn launch_default() -> () {	
 	// Workers.
-	let fractal_texture = fractals::textures::FractalTexture::new(
+	let fractal_texture = fractals::divergence_texture::FractalTexture::new(
 		|z, c| { z * z + c },
+		complex::Algebraic::new(0.0, 0.0),
 		[600.0, 600.0], 
+		[0.0, 0.0],
 		1,
 		0.08,
 		50,
@@ -39,7 +42,7 @@ pub fn launch_default() -> () {
 			renderer: &mut imgui_glium_renderer::Renderer, 
 			display: &glium::Display<glium::glutin::surface::WindowSurface>,
 		| {
-			println!("(?) gui::defaults::launch_default() Initialized.");
+			eprintln!("(?) gui::defaults::launch_default() Initialized.");
 
 			fractal_texture_startup
 				.borrow_mut()
@@ -53,50 +56,15 @@ pub fn launch_default() -> () {
 			renderer: &mut imgui_glium_renderer::Renderer, 
 			display: &glium::Display<glium::glutin::surface::WindowSurface>,
 		| {
-			// Window: settings.
-			ui.window("Settings.")
-				.size([150.0, 250.0], imgui::Condition::FirstUseEver)
-				.position([100.0, 100.0], imgui::Condition::FirstUseEver)
-				.build(|| {
-					ui.text("## Info");
-					ui.text(format!(
-						"- Position: ({}; {})", 
-						fractal_texture.borrow().position[0], 
-						fractal_texture.borrow().position[1]
-					));
-
-
-					ui.separator();
-
-					ui.text_wrapped("## Controls");	
-
-					// Force update.
-					if ui.button("Force update.") {
-						fractal_texture.borrow_mut()
-							.register_texture(display.get_context(), renderer.textures())
-							.expect("(!) gui::default::launch_default() run_ui: can't register texture.");
-					}
-
-					// Zoom slider.
-                    ui.slider_config("Zoom", 1.0, 100000.0)
-                        .flags(imgui::SliderFlags::LOGARITHMIC)
-                        .build(&mut fractal_texture.borrow_mut().zoom);
-
-					// (x; y).
-					ui.slider_config("x", -5.0, 5.0)
-                        .build(&mut fractal_texture.borrow_mut().position[0]);
-					ui.slider_config("y", -5.0, 5.0)
-                        .build(&mut fractal_texture.borrow_mut().position[1]);
-
-					// Iterations.
-					ui.slider_config("Iteration", 1_usize, 250_usize)
-						.build(&mut fractal_texture.borrow_mut().iterations);
-
-					// Threshold for divergence.
-					ui.slider_config("Threshold", 0.0, 5.0)
-						.build(&mut fractal_texture.borrow_mut().threshold);
-
-				});
+			// Settings window.
+			settings::show_settings(
+				[200.0, 300.0], 
+				[0.0, 0.0], 
+				ui, 
+				fractal_texture.clone(), 
+				renderer, 
+				display,
+			);
 			
 
 			// Fractal graphics.

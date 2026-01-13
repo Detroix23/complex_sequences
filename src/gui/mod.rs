@@ -3,4 +3,6 @@
 //! 
 //! Main GUI.
 
+mod settings;
+mod inputs;
 pub mod defaults;
