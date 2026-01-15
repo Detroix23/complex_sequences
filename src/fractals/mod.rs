@@ -4,5 +4,5 @@
 //! Compute and generate the graphics.
 
 pub mod textures;
-mod divergence;
+pub mod divergence;
 pub mod divergence_texture;

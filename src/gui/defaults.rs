@@ -24,6 +24,7 @@ pub fn launch_default() -> () {
 		0.08,
 		50,
 		2.0,
+		fractals::divergence::LimitMethod::Julia,
 		[0, 5, 15],
 		[255, 250, 240],
 	);

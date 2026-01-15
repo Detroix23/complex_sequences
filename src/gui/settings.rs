@@ -88,10 +88,10 @@ where
 			ui.slider_config("Threshold", 0.0, 5.0)
 				.build(&mut fractal_texture.borrow_mut().threshold);
 
-			// Fixed point.
+			// Fixed constant point.
 			gui::inputs::complex_2_sliders(
 				ui, 
-				"Fixed point", 
+				"Constant point", 
 				-5.0, 
 				5.0, 
 				&mut fractal_texture.borrow_mut().constant
