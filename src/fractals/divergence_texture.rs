@@ -1,5 +1,9 @@
 //! # Complex sequences.
 //! src/fractals/divergence_texture.rs
+//! 
+//! Draw fractals according the limit of sequences.
+//! - Mandelbrot,
+//! - Julia.
 
 use std::{
 	borrow, 
@@ -19,8 +23,8 @@ use complex_rust as complex;
 use crate::fractals;
 
 
-/// # `FractalTexture`, drawing board for `imgui`.
-pub struct FractalTexture<F> 
+/// # `Divergent`, drawing board for `imgui`.
+pub struct Divergent<F> 
 where
 	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic,
 {
@@ -35,13 +39,13 @@ where
 	pub constant: complex::Algebraic,
 	/// Size: [width, height].
 	pub size: [complex::Real; 2],
+	#[allow(dead_code)]
 	pub resolution: u32,
 	pub position: [complex::Real; 2],
 	pub zoom: complex::Real,
 	pub iterations: usize,
 	pub threshold: complex::Real,
-	pub grid: bool,
-	pub method: fractals::divergence::LimitMethod,
+	pub method_id: usize,
 
 	// Variables to check if state is modified.
 	constant_last: complex::Algebraic,
@@ -49,19 +53,18 @@ where
 	position_last: [complex::Real; 2],
 	iterations_last: usize,
 	threshold_last: complex::Real,
-	grid_last: bool,
-	method_last: fractals::divergence::LimitMethod,
+	method_id_last: usize,
 
 	/// Graphics.
 	color_stable: [u8; 3],
 	color_divergent: [u8; 3],
 }
 
-impl<F> FractalTexture<F> 
+impl<F> Divergent<F> 
 where
 	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Copy
 {
-	/// Instantiate and returns a link to a new `FractalTexture`.
+	/// Instantiate and returns a link to a new `Divergent`.
 	pub fn new(
 		function: F,
 		constant: complex::Algebraic,
@@ -71,11 +74,11 @@ where
 		zoom: complex::Real,
 		iterations: usize,
 		threshold: complex::Real,
-		method: fractals::divergence::LimitMethod,
+		method_id: usize,
 		color_stable: [u8; 3],
 		color_divergent: [u8; 3],
-	) -> rc::Rc<cell::RefCell<FractalTexture<F>>> {
-		rc::Rc::new(cell::RefCell::new(FractalTexture {
+	) -> rc::Rc<cell::RefCell<Divergent<F>>> {
+		rc::Rc::new(cell::RefCell::new(Divergent {
 			function,
 			iterations_total: 0usize,
 			texture_id: Option::None,
@@ -87,26 +90,56 @@ where
 			zoom,
 			iterations,
 			threshold,
-			grid: true,
-			method,
+			method_id,
 
 			constant_last: Default::default(),
 			zoom_last: 1.0,
 			position_last: [0.0, 0.0],
 			iterations_last: 0,
 			threshold_last: 0.0,
-			grid_last: true,
-			method_last: fractals::divergence::LimitMethod::Mandelbrot,
+			method_id_last: 0,
 
 			color_stable,
 			color_divergent,
 		}))
 	}
 
-	/// Generate and register the fractal texture.
+	/// Check the fields of the `Divergent` versus their `last` counterpart.
 	/// 
-	/// Source: `imgui-examples`, `custom_texture`
-	pub fn register_texture<Facade>(
+	/// Returns `true` if any of them is different.
+	pub fn is_state_updated(self: &mut Self) -> bool {
+		let mut updated: bool = false;
+
+		if self.zoom_last != self.zoom {
+			updated = true;
+			self.zoom_last = self.zoom;
+		} else if self.position_last != self.position {
+			updated = true;
+			self.position_last = self.position;
+		} else if self.iterations_last != self.iterations {
+			updated = true;
+			self.iterations_last = self.iterations;
+		} else if self.threshold_last != self.threshold {
+			updated = true;
+			self.threshold_last = self.threshold;
+		} else if self.constant_last != self.constant {
+			updated = true;
+			self.constant_last = self.constant;
+		} else if self.method_id_last != self.method_id {
+			updated = true;
+			self.method_id_last = self.method_id;
+		}
+
+		updated
+	}
+}
+
+impl<F> fractals::textures::Fractal for Divergent<F> 
+where
+	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Clone,
+{
+
+	fn register_texture<Facade>(
         &mut self,
         gl_context: &Facade,
         textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
@@ -119,38 +152,36 @@ where
 		// Texture generation.
 		let generation_start: time::Instant = time::Instant::now();
 
-		let table = match self.method {
-			fractals::divergence::LimitMethod::Julia => {
-				fractals::divergence::limit_on_screen_julia(
-					self.constant, 
-					self.function,
-					self.threshold, 
-					self.iterations, 
-					size,
-					self.position,
-					self.zoom,
-					self.grid,
-				)
-			}
-			fractals::divergence::LimitMethod::Mandelbrot => {
+		let table = match self.method_id {
+			0 => {
 				fractals::divergence::limit_on_screen_mandelbrot(
 					self.constant, 
-					self.function,
+					self.function.clone(),
 					self.threshold, 
 					self.iterations, 
 					size,
 					self.position,
 					self.zoom,
-					self.grid,
 				)
-			}
+			},
+			1 => {
+				fractals::divergence::limit_on_screen_julia(
+					self.constant, 
+					self.function.clone(),
+					self.threshold, 
+					self.iterations, 
+					size,
+					self.position,
+					self.zoom,
+				)
+			},
+			_ => panic!("(X) fractals::divergence_texture::Divergent::register_texture() `method_id` unknown ({}).", self.method_id),
 		};
 
 		let data = fractals::textures::convert_state_table_to_data(
 			table, 
 			self.color_stable,
 			self.color_divergent,
-			[100, 100, 100],
 			self.iterations,
 		);
 
@@ -180,60 +211,48 @@ where
 			Option::None => {
 				let texture_id = textures.insert(texture);
             	self.texture_id = Some(texture_id);
-
-				eprintln!(
-					"(?) fractals::textures::FractalTexture.register_texture() Updated in {}. zoom={}, position=({}; {})", 
-					match self.generation_time {
-						Option::None => "()",
-						Option::Some(elapsed) => &format!("{:?}", elapsed),
-					}, 
-					self.zoom,
-					self.position[0],
-					self.position[1],
-				);
 			},
 			Option::Some(id) => {
 				textures.replace(id, texture);
 
-				eprintln!(
-					"(?) fractals::textures::FractalTexture.register_texture() Updated in {}. zoom={}, position=({}; {})", 
-					match self.generation_time {
-						Option::None => "()",
-						Option::Some(elapsed) => &format!("{:?}", elapsed),
-					}, 
-					self.zoom,
-					self.position[0],
-					self.position[1],
-				);
+				
 			}
 		}
+		
+		eprintln!(
+			"(?) Divergent: t={} zoom={} pos=({}; {})", 
+			match self.generation_time {
+				Option::None => "()",
+				Option::Some(elapsed) => &format!("{:?}", elapsed),
+			}, 
+			self.zoom,
+			self.position[0],
+			self.position[1],
+		);
 
 
 		Ok(())
 	}
 
-	/// Calls `window` method on `ui`, to display the texture. 
-	/// 
-	/// Source: `imgui-examples`, `custom_texture`
-	pub fn show_textures(&self, ui: &imgui::Ui) {
+	fn show_textures(&self, ui: &imgui::Ui) {
         ui.window("Fractal. ")
             .size(self.size, imgui::Condition::FirstUseEver)
             .build(|| {
-                ui.text(format!("Fractal texture: {}", self.method));
+                ui.text(format!("Fractal texture: {}", self.method_id));
                 
 				if let Some(texture_id) = self.texture_id {
 					if let Some(generation_time) = self.generation_time 
-						&& generation_time.as_micros() != 0
+						&& generation_time.as_millis() != 0
 					{
 						ui.text(format!(
-								"({}; {}) = {} pixels; {} iterations in {:?} => {} iterations/ ms", 
-								self.size[0],
-								self.size[1],
-								self.size[0] * self.size[1],
-								self.iterations_total,
-								generation_time,
-								self.iterations_total as u128 / generation_time.as_micros(),
-							));
+							"({}; {}) = {} pixels; {} iterations in {:?} => {} iterations/ ms", 
+							self.size[0],
+							self.size[1],
+							self.size[0] * self.size[1],
+							self.iterations_total,
+							generation_time,
+							self.iterations_total as u128 / generation_time.as_millis(),
+						));
 					} else {
 						ui.text(format!("Current fractal (error: no data): "));
 					}
@@ -243,44 +262,4 @@ where
                 }
 			});
 	}
-	
-	/// Check the fields of the `FractalTexture` versus their `last` counterpart.
-	/// 
-	/// Returns `true` if any of them is different.
-	pub fn is_state_updated(self: &mut Self) -> bool {
-		let mut updated: bool = false;
-
-		if self.zoom_last != self.zoom {
-			updated = true;
-			self.zoom_last = self.zoom;
-		} else if self.position_last != self.position {
-			updated = true;
-			self.position_last = self.position;
-		} else if self.iterations_last != self.iterations {
-			updated = true;
-			self.iterations_last = self.iterations;
-		} else if self.threshold_last != self.threshold {
-			updated = true;
-			self.threshold_last = self.threshold;
-		} else if self.constant_last != self.constant {
-			updated = true;
-			self.constant_last = self.constant;
-		} else if self.method_last != self.method {
-			updated = true;
-			self.method_last = self.method;
-		}
-
-		updated
-	}
-
 }
-
-/// # `State` of the divergent `FractalTexture`.
-struct State {
-	zoom: complex::Real,
-	position: [complex::Real; 2],
-	iterations: usize,
-	threshold: complex::Real,
-	constant: complex::Real,
-}
-

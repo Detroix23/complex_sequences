@@ -9,13 +9,16 @@ use imgui;
 use complex_rust as complex;
 
 use crate::support;
-use crate::fractals;
+use crate::fractals::{
+	self,
+	textures::Fractal,
+};
 use crate::gui::settings;
 
 /// Launch the default configuration for `App`. 
 pub fn launch_default() -> () {	
 	// Workers.
-	let fractal_texture = fractals::divergence_texture::FractalTexture::new(
+	let divergent_texture = fractals::divergence_texture::Divergent::new(
 		|z, c| { z * z + c },
 		complex::Algebraic::new(0.0, 0.0),
 		[600.0, 600.0], 
@@ -24,14 +27,15 @@ pub fn launch_default() -> () {
 		0.08,
 		50,
 		2.0,
-		fractals::divergence::LimitMethod::Julia,
+		0,
 		[0, 5, 15],
 		[255, 250, 240],
 	);
 	// Necessary for the closure.
-	let fractal_texture_startup = fractal_texture.clone();
-	let fractal_texture_update = fractal_texture.clone();
+	let divergent_texture_startup = divergent_texture.clone();
+	let divergent_texture_update = divergent_texture.clone();
 
+	let mut settings_state: settings::Settings = Default::default();
 
 	// True start.
 	support::init_with_startup( 
@@ -45,7 +49,7 @@ pub fn launch_default() -> () {
 		| {
 			eprintln!("(?) gui::defaults::launch_default() Initialized.");
 
-			fractal_texture_startup
+			divergent_texture_startup
 				.borrow_mut()
 				.register_texture(display.get_context(), renderer.textures())
 				.expect("(!) gui::default::launch_default() startup: can't register texture.");
@@ -57,21 +61,28 @@ pub fn launch_default() -> () {
 			renderer: &mut imgui_glium_renderer::Renderer, 
 			display: &glium::Display<glium::glutin::surface::WindowSurface>,
 		| {
-			// Settings window.
-			settings::show_settings(
-				[200.0, 300.0], 
-				[0.0, 0.0], 
-				ui, 
-				fractal_texture.clone(), 
-				renderer, 
-				display,
-			);
-			
+			match &settings_state.method_id {
+				0 => {
+					// Settings window.
+					settings::show_settings_divergent(
+						[400.0, 600.0], 
+						[0.0, 0.0], 
+						&mut settings_state,
+						ui, 
+						divergent_texture.clone(), 
+						renderer, 
+						display,
+					);
+					
 
-			// Fractal graphics.
-			fractal_texture
-				.borrow_mut()
-				.show_textures(ui);
+					// Fractal graphics.
+					divergent_texture
+						.borrow_mut()
+						.show_textures(ui);
+				}
+
+				_ => todo!("(X) `method` ({}) not yet implemented", settings_state.method_id),
+			};
 		},
 
 		move |
@@ -79,8 +90,8 @@ pub fn launch_default() -> () {
 			display: &glium::Display<glium::glutin::surface::WindowSurface>,
 		| {
 			// Fractal controls update.
-			if fractal_texture_update.borrow_mut().is_state_updated() {
-				fractal_texture_update.borrow_mut()
+			if divergent_texture_update.borrow_mut().is_state_updated() {
+				divergent_texture_update.borrow_mut()
 					.register_texture(display.get_context(), renderer.textures())
 					.expect("(!) gui::default::launch_default() update: can't register texture.");
 			}

@@ -1,16 +1,49 @@
 //! # Complex sequences.
-//! src/fractals/holomorphism.rs  
+//! src/fractals/divergence.rs
+//! 
+//! Compute limits of sequences, and determine if they are divergent.  
 
-use std::fmt;
+use std::{
+	fmt,
+	convert,
+};
+
 use complex_rust as complex;
-
 use complex::Shared;
 
 /// # `LimitMethod` for any point of R².
+/// Define how are defined the parameters `z0` and `c`.
+/// To `usize`:
+/// ```rust, no_run
+/// 0. Mandelbrot,
+/// 1. Julia,
+/// ```
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub enum LimitMethod {
 	Mandelbrot,
 	Julia,
+}
+
+impl LimitMethod {
+	/// Return a `Vec` of all the methods.
+	/// ```rust, no_run
+	/// 0. Mandelbrot,
+	/// 1. Julia,
+	/// ```
+	pub fn list() -> Vec<LimitMethod> {
+		vec![
+			LimitMethod::Mandelbrot,
+			LimitMethod::Julia,
+		]
+	}
+
+	/// Return a `&'static str` representation of `LimitMethod`, with its id.
+	fn to_static_str(self: &Self) -> &'static str {
+		match &self {
+			LimitMethod::Mandelbrot => "1. Mandelbrot",
+			LimitMethod::Julia => "2. Julia",
+		}
+	}
 }
 
 impl fmt::Display for LimitMethod {
@@ -22,13 +55,18 @@ impl fmt::Display for LimitMethod {
 	}
 }
 
+impl convert::AsRef<str> for LimitMethod {
+	fn as_ref(self: &Self) -> &str {
+		&self.to_static_str()
+	}
+}
+
 /// # Divergence `State`.
 /// Tell if a function explode toward infinity or remains bounded.
 pub enum State {
 	/// Divergent: in how many `iterations` does it diverged. 
 	Divergent{ iterations: usize },
 	Stable,
-	Grid,
 }
 
 /// # `Limit` of `f`. 
@@ -86,7 +124,6 @@ pub fn limit_on_screen_mandelbrot<F>(
 	size: [usize; 2],
 	position: [complex::Real; 2],
 	zoom: complex::Real,
-	grid_enabled: bool,
 ) -> Vec<Vec<State>>
 where
 	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic,
@@ -133,7 +170,6 @@ pub fn limit_on_screen_julia<F>(
 	size: [usize; 2],
 	position: [complex::Real; 2],
 	zoom: complex::Real,
-	grid_enabled: bool,
 ) -> Vec<Vec<State>>
 where
 	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic,

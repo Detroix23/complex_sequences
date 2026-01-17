@@ -1,7 +1,29 @@
 //! # Complex sequences.
 //! src/fractals/textures.rs
 
+use std::error;
+
+use glium; 
+
 use crate::fractals::divergence;
+
+pub trait Fractal {
+	/// Generate and register the fractal texture.
+	/// 
+	/// Source: `imgui-examples`, `custom_texture`
+	fn register_texture<Facade>(
+        &mut self,
+        gl_context: &Facade,
+        textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
+    ) -> Result<(), Box<dyn error::Error>>
+    where
+        Facade: glium::backend::Facade;
+
+	/// Calls `window` method on `ui`, to display the texture. 
+	/// 
+	/// Source: `imgui-examples`, `custom_texture`
+	fn show_textures(&self, ui: &imgui::Ui) -> ();
+}
 
 /// # `Data` from holomorphic computations.
 pub struct Data {
@@ -14,7 +36,6 @@ pub fn convert_state_table_to_data(
 	table: Vec<Vec<divergence::State>>, 
 	stable: [u8; 3], 
 	divergent: [u8; 3],
-	grid: [u8; 3],
 	iterations_max: usize,
 ) -> Data {
 	let mut data: Vec<u8> = Vec::new();
@@ -37,13 +58,6 @@ pub fn convert_state_table_to_data(
 
 					iterations_total += iterations_max;
 				},
-				divergence::State::Grid => {
-					data.push(grid[0]);
-					data.push(grid[1]);
-					data.push(grid[2]);			
-
-					iterations_total += 1;
-				}
 			};
 		}
 	}
