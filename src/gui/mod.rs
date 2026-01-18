@@ -6,3 +6,4 @@
 mod settings;
 mod inputs;
 pub mod defaults;
+pub mod color;

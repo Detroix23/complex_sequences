@@ -1,9 +1,7 @@
 //! # Complex sequences.
-//! src/fractals/divergence_texture.rs
-//! 
-//! Draw fractals according the limit of sequences.
-//! - Mandelbrot,
-//! - Julia.
+//! src/fractals/root_texture.rs
+//!
+//! Draw the texture for a Newton fractal.
 
 use std::{
 	borrow, 
@@ -23,20 +21,20 @@ use complex_rust as complex;
 use crate::fractals;
 
 
-/// # `Divergent`, drawing board for `imgui`.
-pub struct Divergent<F> 
+/// # `Root`, drawing board for `imgui`.
+pub struct Root<F, D> 
 where
-	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic,
+	F: Fn(complex::Algebraic) -> complex::Algebraic,
+	D: Fn(complex::Algebraic) -> complex::Algebraic,
 {
 	function: F,
+	derivative: D,
 	texture_id: Option<imgui::TextureId>,
 	
 	iterations_total: usize,
 	generation_time: Option<time::Duration>,
 
 	// Parameters.
-	/// Constant fixed point. E.g: `c` in `f(z) = z * z + c`.
-	pub constant: complex::Algebraic,
 	/// Size: [width, height].
 	pub size: [complex::Real; 2],
 	#[allow(dead_code)]
@@ -56,18 +54,19 @@ where
 	method_id_last: usize,
 
 	/// Graphics.
-	color_stable: [u8; 3],
-	color_divergent: [u8; 3],
+	color_no_root: [u8; 3],
+
 }
 
-impl<F> Divergent<F> 
+impl<F, D> Root<F, D> 
 where
-	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Copy
+	F: Fn(complex::Algebraic) -> complex::Algebraic,
+	D: Fn(complex::Algebraic) -> complex::Algebraic,
 {
-	/// Instantiate and returns a link to a new `Divergent`.
+	/// Instantiate and returns a link to a new `Root`.
 	pub fn new(
 		function: F,
-		constant: complex::Algebraic,
+		derivative: D,
 		size: [complex::Real; 2],
 		position: [complex::Real; 2], 
 		resolution: u32,
@@ -75,14 +74,13 @@ where
 		iterations: usize,
 		threshold: complex::Real,
 		method_id: usize,
-		color_stable: [u8; 3],
-		color_divergent: [u8; 3],
-	) -> rc::Rc<cell::RefCell<Divergent<F>>> {
-		rc::Rc::new(cell::RefCell::new(Divergent {
+		color_no_root: [u8; 3],
+	) -> rc::Rc<cell::RefCell<Root<F, D>>> {
+		rc::Rc::new(cell::RefCell::new(Root {
 			function,
+			derivative,
 			iterations_total: 0usize,
 			texture_id: Option::None,
-			constant,
 			size, 
 			resolution,
 			generation_time: Option::None,
@@ -99,12 +97,11 @@ where
 			threshold_last: 0.0,
 			method_id_last: 0,
 
-			color_stable,
-			color_divergent,
+			color_no_root,
 		}))
 	}
 
-	/// Check the fields of the `Divergent` versus their `last` counterpart.
+	/// Check the fields of the `Root` versus their `last` counterpart.
 	/// 
 	/// Returns `true` if any of them is different.
 	pub fn is_state_updated(self: &mut Self) -> bool {
@@ -122,9 +119,6 @@ where
 		} else if self.threshold_last != self.threshold {
 			updated = true;
 			self.threshold_last = self.threshold;
-		} else if self.constant_last != self.constant {
-			updated = true;
-			self.constant_last = self.constant;
 		} else if self.method_id_last != self.method_id {
 			updated = true;
 			self.method_id_last = self.method_id;
@@ -134,9 +128,10 @@ where
 	}
 }
 
-impl<F> fractals::textures::Fractal for Divergent<F> 
+impl<F, D> fractals::textures::Fractal for Root<F, D> 
 where
-	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Clone,
+	F: Fn(complex::Algebraic) -> complex::Algebraic,
+	D: Fn(complex::Algebraic) -> complex::Algebraic,
 {
 
 	fn register_texture<Facade>(
@@ -154,34 +149,24 @@ where
 
 		let table = match self.method_id {
 			0 => {
-				fractals::divergence::limit_on_screen_mandelbrot(
-					self.constant, 
-					self.function.clone(),
-					self.threshold, 
+				fractals::root::limit_on_screen_root(
+					&self.function, 
+					&self.derivative, 
 					self.iterations, 
-					size,
-					self.position,
-					self.zoom,
+					size, 
+					self.position, 
+					self.zoom
 				)
 			},
-			1 => {
-				fractals::divergence::limit_on_screen_julia(
-					self.constant, 
-					self.function.clone(),
-					self.threshold, 
-					self.iterations, 
-					size,
-					self.position,
-					self.zoom,
-				)
-			},
-			_ => panic!("(X) fractals::divergence_texture::Divergent::register_texture() `method_id` unknown ({}).", self.method_id),
+			_ => panic!(
+				"(X) fractals::divergence_texture::Divergent::register_texture() `method_id` unknown ({}).", 
+				self.method_id
+			),
 		};
 
-		let data = fractals::textures::convert_state_table_to_data(
+		let data = fractals::textures::convert_root_table_to_data(
 			table, 
-			self.color_stable,
-			self.color_divergent,
+			self.color_no_root,
 			self.iterations,
 		);
 
@@ -220,7 +205,7 @@ where
 		}
 		
 		eprintln!(
-			"(?) Divergent: t={} zoom={} pos=({}; {})", 
+			"(?) Root: t={} zoom={} pos=({}; {})", 
 			match self.generation_time {
 				Option::None => "()",
 				Option::Some(elapsed) => &format!("{:?}", elapsed),
@@ -235,11 +220,11 @@ where
 	}
 
 	fn show_textures(&self, ui: &imgui::Ui, position: [complex::Real; 2]) {
-        ui.window("Fractal 'Divergent'. ")
+        ui.window("Fractal 'Root'. ")
             .size(self.size, imgui::Condition::FirstUseEver)
 			.position(position, imgui::Condition::FirstUseEver)
             .build(|| {
-                ui.text(format!("Fractal 'divergent' texture: {}", self.method_id));
+                ui.text(format!("Fractal 'root' texture: {}", self.method_id));
                 
 				if let Some(texture_id) = self.texture_id {
 					if let Some(generation_time) = self.generation_time 

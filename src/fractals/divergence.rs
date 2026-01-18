@@ -11,6 +11,14 @@ use std::{
 use complex_rust as complex;
 use complex::Shared;
 
+/// # Divergence `State`.
+/// Tell if a function explode toward infinity or remains bounded.
+pub enum State {
+	/// Divergent: in how many `iterations` does it diverged. 
+	Divergent{ iterations: usize },
+	Stable,
+}
+
 /// # `LimitMethod` for any point of R².
 /// Define how are defined the parameters `z0` and `c`.
 /// To `usize`:
@@ -59,14 +67,6 @@ impl convert::AsRef<str> for LimitMethod {
 	fn as_ref(self: &Self) -> &str {
 		&self.to_static_str()
 	}
-}
-
-/// # Divergence `State`.
-/// Tell if a function explode toward infinity or remains bounded.
-pub enum State {
-	/// Divergent: in how many `iterations` does it diverged. 
-	Divergent{ iterations: usize },
-	Stable,
 }
 
 /// # `Limit` of `f`. 
@@ -147,8 +147,6 @@ where
 
 		grid.push(line);
 	}
-
-
 
 	grid
 }

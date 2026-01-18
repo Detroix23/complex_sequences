@@ -9,6 +9,8 @@ use std::convert;
 pub mod textures;
 pub mod divergence;
 pub mod divergence_texture;
+pub mod root;
+pub mod root_texture;
 
 /// # Fractal drawing `Method`.
 /// Choose which fractal "family" to draw. 
