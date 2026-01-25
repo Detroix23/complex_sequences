@@ -8,9 +8,7 @@ use std::convert;
 
 pub mod textures;
 pub mod divergence;
-pub mod divergence_texture;
 pub mod root;
-pub mod root_texture;
 
 /// # Fractal drawing `Method`.
 /// Choose which fractal "family" to draw. 
@@ -20,6 +18,7 @@ pub mod root_texture;
 /// 1. Roots,
 /// ```
 pub enum Method {
+	Debug,
 	Divergence,
 	Roots,
 }
@@ -32,6 +31,7 @@ impl Method {
 	/// ```
 	pub fn list() -> Vec<Method> {
 		vec![
+			Method::Debug,
 			Method::Divergence,
 			Method::Roots,
 		]
@@ -40,8 +40,9 @@ impl Method {
 	/// Return a `&'static str` representation of `Method`, with its id.
 	fn to_static_str(self: &Self) -> &'static str {
 		match &self {
-			Method::Divergence => "1. Divergence",
-			Method::Roots => "2. Roots",
+			Method::Debug => "0. Debug.",
+			Method::Divergence => "1. Divergence.",
+			Method::Roots => "2. Roots.",
 		}
 	}
 }
@@ -49,6 +50,7 @@ impl Method {
 impl fmt::Display for Method {
 	fn fmt(self: &Self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(formatter, "Method::{}", match &self {
+			Method::Debug => "Debug",
 			Method::Divergence => "Divergence",
 			Method::Roots => "Roots",
 		})

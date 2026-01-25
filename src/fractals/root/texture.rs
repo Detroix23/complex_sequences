@@ -1,5 +1,5 @@
 //! # Complex sequences.
-//! src/fractals/root_texture.rs
+//! src/fractals/root/texture.rs
 //!
 //! Draw the texture for a Newton fractal.
 
@@ -149,7 +149,7 @@ where
 
 		let table = match self.method_id {
 			0 => {
-				fractals::root::limit_on_screen_root(
+				fractals::root::maths::limit_on_screen_root(
 					&self.function, 
 					&self.derivative, 
 					self.iterations, 

@@ -1,5 +1,5 @@
 //! # Complex sequences.
-//! src/fractals/divergence.rs
+//! src/fractals/root/maths.rs
 //! 
 //! Try to find roots of a complex function.
 
@@ -10,11 +10,11 @@ use std::{
 
 use complex_rust as complex;
 
-/// # `Root`.
+/// # `IsRoot`.
 /// Define a possible root.
 /// - `No`: no root,
 /// - `Yes`: there is root, and the root is `root`: complex::Algebraic.
-pub enum Root {
+pub enum IsRoot {
 	No,
 	Yes { 
 		root: complex::Algebraic,
@@ -77,7 +77,7 @@ fn newton_method<F, D>(
 	function: F,
 	derivative: D,
 	iterations: usize,
-) -> Root
+) -> IsRoot
 where
 	F: Fn(complex::Algebraic) -> complex::Algebraic,
 	D: Fn(complex::Algebraic) -> complex::Algebraic,
@@ -91,9 +91,9 @@ where
 	} 
 
 	if function(z) == complex::Algebraic::default() {
-		Root::Yes{ root: z, iterations: count }
+		IsRoot::Yes{ root: z, iterations: count }
 	} else {
-		Root::No
+		IsRoot::No
 	}
 }
 
@@ -102,7 +102,7 @@ where
 /// 
 /// It is Newton's like, which is:
 /// - z0 is pixel.x + i*pixel.y,
-/// - returns a `Vec<Root>`, coordinates of the root reached.
+/// - returns a `Vec<IsRoot>`, coordinates of the root reached.
 pub fn limit_on_screen_root<F, D>(
 	function: F,
 	derivative: D,
@@ -110,15 +110,15 @@ pub fn limit_on_screen_root<F, D>(
 	size: [usize; 2],
 	position: [complex::Real; 2],
 	zoom: complex::Real,
-) -> Vec<Vec<Root>>
+) -> Vec<Vec<IsRoot>>
 where
 	F: Fn(complex::Algebraic) -> complex::Algebraic,
 	D: Fn(complex::Algebraic) -> complex::Algebraic,
 {
-	let mut grid: Vec<Vec<Root>> = Vec::with_capacity(size[0] * size[1]);
+	let mut grid: Vec<Vec<IsRoot>> = Vec::with_capacity(size[0] * size[1]);
 
 	for y in 0..size[1] {
-		let mut line: Vec<Root> = Vec::with_capacity(size[0]); 
+		let mut line: Vec<IsRoot> = Vec::with_capacity(size[0]); 
 		
 		for x in 0..size[0] {
 			line.push(newton_method(

@@ -1,5 +1,5 @@
 //! # Complex sequences.
-//! src/fractals/divergence_texture.rs
+//! src/fractals/divergence/texture.rs
 //! 
 //! Draw fractals according the limit of sequences.
 //! - Mandelbrot,
@@ -154,7 +154,7 @@ where
 
 		let table = match self.method_id {
 			0 => {
-				fractals::divergence::limit_on_screen_mandelbrot(
+				fractals::divergence::maths::limit_on_screen_mandelbrot(
 					self.constant, 
 					self.function.clone(),
 					self.threshold, 
@@ -165,7 +165,7 @@ where
 				)
 			},
 			1 => {
-				fractals::divergence::limit_on_screen_julia(
+				fractals::divergence::maths::limit_on_screen_julia(
 					self.constant, 
 					self.function.clone(),
 					self.threshold, 

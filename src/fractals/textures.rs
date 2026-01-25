@@ -74,19 +74,16 @@ pub fn convert_state_table_to_data(
 
 /// Extract, from a `table`, all the unique found roots.
 fn extract_unique_roots(
-	table: &Vec<Vec<fractals::root::Root>>,
+	table: &Vec<Vec<fractals::root::IsRoot>>,
 ) -> Vec<complex::Algebraic> {
 	let mut found: Vec<complex::Algebraic> = Vec::new();
 
 	for line in table {
-		for root in line {
-			match root {
-				fractals::root::Root::Yes { root, .. } => {
-					if !found.contains(root) {
-						found.push(*root);
-					}
-				},
-				_ => (),
+		for potential in line {
+			if let fractals::root::IsRoot::Yes { root, .. } = potential {
+				if !found.contains(root) {
+					found.push(*root);
+				}
 			}
 		}
 	}
@@ -96,7 +93,7 @@ fn extract_unique_roots(
 
 /// Convert a 2D `table`: `Vec<Vec<Root>>` into `Vec<u8>` of raw `data`. 
 pub fn convert_root_table_to_data(
-	table: Vec<Vec<fractals::root::Root>>,
+	table: Vec<Vec<fractals::root::IsRoot>>,
 	no_root_color: [u8; 3],
 	iterations_max: usize,
 ) -> Data {
@@ -107,14 +104,14 @@ pub fn convert_root_table_to_data(
 	for line in table {
 		for root in line {
 			match root {
-				fractals::root::Root::No => {
+				fractals::root::IsRoot::No => {
 					data.push(no_root_color[0]);
 					data.push(no_root_color[1]);
 					data.push(no_root_color[2]);
 
 					iterations_total += iterations_max;
 				},
-				fractals::root::Root::Yes { 
+				fractals::root::IsRoot::Yes { 
 					root, 
 					iterations, 
 				} => {

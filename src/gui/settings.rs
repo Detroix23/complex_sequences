@@ -22,15 +22,37 @@ use crate::gui;
 
 /// # `Settings` state.
 /// Store only persistent settings.
-#[derive(Default, Clone)]
 pub struct Settings {
 	/// Fractal family, method id.
 	/// ```rust, no_run
-	/// 0. Divergence,
-	/// 1. Roots,
+	/// 0. Debug
+	/// 1. Divergence,
+	/// 2. Roots,
 	/// ```
 	pub method_id: usize,
 }
+
+impl Default for Settings {
+	fn default() -> Self {
+		Settings { 
+			// 0 is debug.
+			method_id: 1usize  
+		}
+	}
+}
+
+/// A `combo` selector for the general fractal family.
+/// 
+/// Item shared in all family. 
+fn family_selector(ui: &imgui::Ui, settings: &mut Settings) {
+	// 
+	ui.combo(
+		"Method", 
+		&mut settings.method_id, 
+		&fractals::Method::list(), 
+		| method: &fractals::Method | borrow::Cow::Borrowed(method.as_ref()),
+	);
+} 
 
 
 /// Show a settings window to read and modify values of the current fractal.
@@ -42,7 +64,7 @@ pub fn show_settings_divergent<F>(
 	settings: &mut Settings,
 	ui: &imgui::Ui,
 	// Rc<RefCell<Divergent<impl Fn(Algebraic, Algebraic) -> Algebraic>>>
-	divergent_texture: rc::Rc<cell::RefCell<fractals::divergence_texture::Divergent<F>>>,
+	divergent_texture: rc::Rc<cell::RefCell<fractals::divergence::Divergent<F>>>,
 	renderer: &mut imgui_glium_renderer::Renderer, 
 	display: &glium::Display<glium::glutin::surface::WindowSurface>,
 ) -> () 
@@ -141,7 +163,7 @@ pub fn show_settings_root<F, D>(
 	position: [complex::Real; 2],
 	settings: &mut Settings,
 	ui: &imgui::Ui,
-	root_texture: rc::Rc<cell::RefCell<fractals::root_texture::Root<F, D>>>,
+	root_texture: rc::Rc<cell::RefCell<fractals::root::Root<F, D>>>,
 	renderer: &mut imgui_glium_renderer::Renderer, 
 	display: &glium::Display<glium::glutin::surface::WindowSurface>,
 ) -> () 
@@ -163,19 +185,12 @@ where
 				root_texture.borrow().position[1]
 			));
 
-
 			ui.separator();
 
-
 			ui.text_wrapped("## Controls");	
+			
+			family_selector(ui, settings);
 
-			// General fractal family.
-			ui.combo(
-				"Method", 
-				&mut settings.method_id, 
-				&fractals::Method::list(), 
-				| method: &fractals::Method | borrow::Cow::Borrowed(method.as_ref()),
-			);
 			// Limit type.
 			ui.combo(
 				"Limit type",
@@ -222,5 +237,27 @@ where
 			ui.slider_config("Threshold", 0.0, 5.0)
 				.build(&mut root_texture.borrow_mut().threshold);
 			
+		});
+}
+
+/// Show a settings window for debug.
+pub fn show_settings_debug(
+	size: [complex::Real; 2],
+	position: [complex::Real; 2],
+	settings: &mut Settings,
+	ui: &imgui::Ui,
+) -> () {
+	// Window: settings.
+	ui.window("Settings (Debug).")
+		.size(size, imgui::Condition::FirstUseEver)
+		.position(position, imgui::Condition::FirstUseEver)
+		.build(|| {
+			ui.text("# Debug.");
+
+			ui.separator();
+
+			ui.text_wrapped("## Controls");	
+			
+			family_selector(ui, settings);
 		});
 }

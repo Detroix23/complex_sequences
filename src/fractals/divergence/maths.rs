@@ -1,5 +1,5 @@
 //! # Complex sequences.
-//! src/fractals/divergence.rs
+//! src/fractals/divergence/maths.rs
 //! 
 //! Compute limits of sequences, and determine if they are divergent.  
 
