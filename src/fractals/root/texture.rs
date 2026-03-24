@@ -19,6 +19,7 @@ use imgui_glium_renderer;
 use complex_rust as complex;
 
 use crate::fractals;
+use crate::support::rendering;
 
 
 /// # `Root`, drawing board for `imgui`.
@@ -37,7 +38,6 @@ where
 	// Parameters.
 	/// Size: [width, height].
 	pub size: [complex::Real; 2],
-	#[allow(dead_code)]
 	pub resolution: u32,
 	pub position: [complex::Real; 2],
 	pub zoom: complex::Real,
@@ -147,7 +147,7 @@ where
 		// Texture generation.
 		let generation_start: time::Instant = time::Instant::now();
 
-		let table = match self.method_id {
+		let table: Vec<Vec<fractals::root::IsRoot>> = match self.method_id {
 			0 => {
 				fractals::root::maths::limit_on_screen_root(
 					&self.function, 
@@ -159,12 +159,12 @@ where
 				)
 			},
 			_ => panic!(
-				"(X) fractals::divergence_texture::Divergent::register_texture() `method_id` unknown ({}).", 
+				"(X) fractals::divergence::texture::Divergent::register_texture() `method_id` unknown ({}).", 
 				self.method_id
 			),
 		};
 
-		let data = fractals::textures::convert_root_table_to_data(
+		let data: fractals::textures::Data = fractals::textures::convert_root_table_to_data(
 			table, 
 			self.color_no_root,
 			self.iterations,
@@ -173,36 +173,13 @@ where
 		self.iterations_total = data.iterations_total;
 		self.generation_time = Option::Some(generation_start.elapsed());
 		
-		// Render (from `imgui-examples`, `custom_texture`).
-		let raw = texture::RawImage2d {
-			data: borrow::Cow::Owned(data.raw_pixels),
-			width: size[0] as u32,
-			height: size[1] as u32,
-			format: texture::ClientFormat::U8U8U8,
-		};
-
-		let gl_texture = glium::Texture2d::new(gl_context, raw)?;
-		
-		let texture = imgui_glium_renderer::Texture {
-			texture: rc::Rc::new(gl_texture),
-			sampler: uniforms::SamplerBehavior {
-				magnify_filter: uniforms::MagnifySamplerFilter::Linear,
-				minify_filter: uniforms::MinifySamplerFilter::Linear,
-				..Default::default()
-			},
-		};
-
-		match self.texture_id {
-			Option::None => {
-				let texture_id = textures.insert(texture);
-            	self.texture_id = Some(texture_id);
-			},
-			Option::Some(id) => {
-				textures.replace(id, texture);
-
-				
-			}
-		}
+		self.texture_id = Option::Some(rendering::render_texture(
+			self.texture_id, 
+			data, 
+			size, 
+			gl_context, 
+			textures
+		).expect("(X) fractals::divergence::texture::Divergent::register_texture() render_texture error."));
 		
 		eprintln!(
 			"(?) Root: t={} zoom={} pos=({}; {})", 

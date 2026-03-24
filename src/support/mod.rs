@@ -16,6 +16,7 @@ use std::path::Path;
 use std::time::Instant;
 
 mod clipboard;
+pub mod rendering;
 
 pub const FONT_SIZE: f32 = 13.0;
 

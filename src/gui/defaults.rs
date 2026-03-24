@@ -23,8 +23,13 @@ use crate::gui::{
 	debug,
 };
 
-/// Launch the default configuration for `App`. 
-pub fn launch_default() -> () {	
+/// Launch the default configuration for `App`.
+/// 
+/// It comprises different **modes**:
+/// - debug,
+/// - divergence,
+/// - root.
+pub fn launch_default() -> () {
 	// Workers.
 	let divergent_texture = fractals::divergence::Divergent::new(
 		|z: complex_rust::Algebraic, c: complex_rust::Algebraic| z * z + c ,
@@ -58,8 +63,12 @@ pub fn launch_default() -> () {
 	let root_texture_startup = root_texture.clone();
 	let root_texture_update = root_texture.clone();
 
+	let debug_texture = debug::DebugTexture::new();
+	let debug_texture_startup = debug_texture.clone();
+
 	let settings_state = rc::Rc::new(cell::RefCell::new(settings::Settings::default()));
 	let settings_state_update = settings_state.clone();
+
 
 	// True start.
 	support::init_with_startup( 
@@ -71,17 +80,27 @@ pub fn launch_default() -> () {
 			renderer: &mut imgui_glium_renderer::Renderer, 
 			display: &glium::Display<glium::glutin::surface::WindowSurface>,
 		| {
-			eprintln!("(?) gui::defaults::launch_default() Initialized.");
+			eprintln!("(?) gui::defaults::launch_default() Initializing.");
 
 			divergent_texture_startup
 				.borrow_mut()
 				.register_texture(display.get_context(), renderer.textures())
-				.expect("(!) gui::default::launch_default() startup: can't register texture.");
+				.expect("(!) gui::default::launch_default() startup: can't register `divergent` texture.");
+			eprintln!("(?) gui::defaults::launch_default() `divergent` registered.");
 
 			root_texture_startup
 				.borrow_mut()
 				.register_texture(display.get_context(), renderer.textures())
-				.expect("(!) gui::default::launch_default() startup: can't register texture.");
+				.expect("(!) gui::default::launch_default() startup: can't register `roots` texture.");
+			eprintln!("(?) gui::defaults::launch_default() `roots` registered.");
+		
+			debug_texture_startup
+				.borrow_mut()
+				.register_texture(display.get_context(), renderer.textures())
+				.expect("(!) gui::default::launch_default() startup: can't register `debug` texture.");
+			eprintln!("(?) gui::defaults::launch_default() `debug` registered.");
+
+			eprintln!("(?) gui::defaults::launch_default() Initializing phase completed.");
 		}, 
 
 		// Run, draw.
@@ -96,6 +115,7 @@ pub fn launch_default() -> () {
 				0 => debug::draw(
 					&mut settings_state.borrow_mut(),
 					ui, 
+					debug_texture.clone(),
 				),
 				1 => fractals::divergence::app::draw(
 					settings_state.clone(), 

@@ -2,6 +2,7 @@
 //! src/gui/color.rs
 
 /// # RGB.
+#[derive(Debug)]
 pub struct Rgb {
 	pub red: u8,
 	pub green: u8,
@@ -80,8 +81,8 @@ impl Hsv {
 
 #[test]
 fn test_hsv_to_rgb() -> () {
-	for n in 0..360 {
-		let hsv = Hsv::new(n as f64, 1.0, 1.0);
+	for d in 0..360 {
+		let hsv = Hsv::new(d as f64, 1.0, 1.0);
 		let rgb = hsv.to_rgb();
 		println!(
 			"- hsv=({}; {}; {}), rgb=({}; {}; {})", 
