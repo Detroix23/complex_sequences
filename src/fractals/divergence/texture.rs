@@ -20,7 +20,7 @@ use imgui;
 use imgui_glium_renderer;
 use complex_rust as complex;
 
-use crate::fractals;
+use crate::{fractals, gui};
 
 
 /// # `Divergent`, drawing board for `imgui`.
@@ -56,8 +56,8 @@ where
 	method_id_last: usize,
 
 	/// Graphics.
-	color_stable: [u8; 3],
-	color_divergent: [u8; 3],
+	color_stable: gui::color::Rgb,
+	color_divergent: gui::color::Rgb,
 }
 
 impl<F> Divergent<F> 
@@ -75,8 +75,8 @@ where
 		iterations: usize,
 		threshold: complex::Real,
 		method_id: usize,
-		color_stable: [u8; 3],
-		color_divergent: [u8; 3],
+		color_stable: gui::color::Rgb,
+		color_divergent: gui::color::Rgb,
 	) -> rc::Rc<cell::RefCell<Divergent<F>>> {
 		rc::Rc::new(cell::RefCell::new(Divergent {
 			function,

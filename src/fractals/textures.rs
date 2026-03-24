@@ -38,8 +38,8 @@ pub struct Data {
 /// Convert a 2D `table`: `Vec<Vec<State>>` into `Vec<u8>` of raw `data`. 
 pub fn convert_state_table_to_data(
 	table: Vec<Vec<fractals::divergence::State>>, 
-	stable: [u8; 3], 
-	divergent: [u8; 3],
+	stable: gui::color::Rgb, 
+	divergent: gui::color::Rgb,
 	iterations_max: usize,
 ) -> Data {
 	let mut data: Vec<u8> = Vec::new();
@@ -49,16 +49,16 @@ pub fn convert_state_table_to_data(
 		for state in line {
 			match state {
 				fractals::divergence::State::Divergent{ iterations } => {
-					data.push((divergent[0] as usize * iterations / iterations_max) as u8);
-					data.push((divergent[1] as usize * iterations / iterations_max) as u8);
-					data.push((divergent[2] as usize * iterations / iterations_max) as u8);
+					data.push((divergent.red as usize * iterations / iterations_max) as u8);
+					data.push((divergent.green as usize * iterations / iterations_max) as u8);
+					data.push((divergent.blue as usize * iterations / iterations_max) as u8);
 
 					iterations_total += iterations;
 				},
 				fractals::divergence::State::Stable => {
-					data.push(stable[0]);
-					data.push(stable[1]);
-					data.push(stable[2]);
+					data.push(stable.red);
+					data.push(stable.green);
+					data.push(stable.blue);
 
 					iterations_total += iterations_max;
 				},
@@ -94,7 +94,7 @@ fn extract_unique_roots(
 /// Convert a 2D `table`: `Vec<Vec<Root>>` into `Vec<u8>` of raw `data`. 
 pub fn convert_root_table_to_data(
 	table: Vec<Vec<fractals::root::IsRoot>>,
-	no_root_color: [u8; 3],
+	no_root_color: gui::color::Rgb,
 	iterations_max: usize,
 ) -> Data {
 	let mut data: Vec<u8> = Vec::new();
@@ -105,9 +105,9 @@ pub fn convert_root_table_to_data(
 		for root in line {
 			match root {
 				fractals::root::IsRoot::No => {
-					data.push(no_root_color[0]);
-					data.push(no_root_color[1]);
-					data.push(no_root_color[2]);
+					data.push(no_root_color.red);
+					data.push(no_root_color.green);
+					data.push(no_root_color.blue);
 
 					iterations_total += iterations_max;
 				},

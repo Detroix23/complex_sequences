@@ -2,7 +2,7 @@
 //! src/gui/color.rs
 
 /// # RGB.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Rgb {
 	pub red: u8,
 	pub green: u8,
@@ -20,6 +20,7 @@ impl Rgb {
 /// - `hue`: f64 in [0; 360[,
 /// - `saturation`: f64 in [0; 1],
 /// - `brightness` (or "value"): f64 in [0; 1],
+#[derive(Debug, Clone, Copy)]
 pub struct Hsv {
 	pub hue: f64,
 	pub saturation: f64,

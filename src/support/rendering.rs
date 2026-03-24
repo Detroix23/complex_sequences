@@ -1,5 +1,7 @@
 //! # Complex sequences.
 //! src/support/textures.rs
+//! 
+//! Helper functions for images and textures rendering.
 
 use std::{borrow, rc};
 

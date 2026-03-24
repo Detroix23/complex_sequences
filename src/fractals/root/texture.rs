@@ -4,7 +4,6 @@
 //! Draw the texture for a Newton fractal.
 
 use std::{
-	borrow, 
 	cell, 
 	error, 
 	rc, 
@@ -12,13 +11,13 @@ use std::{
 };
 
 use glium::{
-	self, backend, texture, uniforms
+	self, backend
 };
 use imgui;
 use imgui_glium_renderer;
 use complex_rust as complex;
 
-use crate::fractals;
+use crate::{fractals, gui};
 use crate::support::rendering;
 
 
@@ -54,7 +53,7 @@ where
 	method_id_last: usize,
 
 	/// Graphics.
-	color_no_root: [u8; 3],
+	color_no_root: gui::color::Rgb,
 
 }
 
@@ -74,7 +73,7 @@ where
 		iterations: usize,
 		threshold: complex::Real,
 		method_id: usize,
-		color_no_root: [u8; 3],
+		color_no_root: gui::color::Rgb,
 	) -> rc::Rc<cell::RefCell<Root<F, D>>> {
 		rc::Rc::new(cell::RefCell::new(Root {
 			function,

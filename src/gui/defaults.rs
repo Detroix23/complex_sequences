@@ -1,7 +1,7 @@
 //! # Complex sequences.
 //! src/gui/defaults.rs
 //! 
-//! Defaults settings for the `App`.
+//! Default launch for the `App`.
 
 use std::{
 	rc,
@@ -18,10 +18,7 @@ use crate::fractals::{
 	self,
 	textures::Fractal,
 };
-use crate::gui::{
-	settings,
-	debug,
-};
+use crate::gui::{self, settings, debug};
 
 /// Launch the default configuration for `App`.
 /// 
@@ -41,8 +38,8 @@ pub fn launch_default() -> () {
 		50,
 		2.0,
 		0,
-		[0, 5, 15],
-		[255, 250, 240],
+		gui::color::Rgb::new(0, 5, 15),
+		gui::color::Rgb::new(255, 250, 240),
 	);
 	// Necessary for the closure.
 	let divergent_texture_startup = divergent_texture.clone();
@@ -58,7 +55,7 @@ pub fn launch_default() -> () {
 		50,
 		1.0,
 		0,
-		[0, 0, 0],
+		gui::color::Rgb::new(0, 0, 0),
 	);
 	let root_texture_startup = root_texture.clone();
 	let root_texture_update = root_texture.clone();
@@ -71,7 +68,7 @@ pub fn launch_default() -> () {
 
 
 	// True start.
-	support::init_with_startup( 
+	support::initialization::with_startup( 
 		"Complex sequences. ", 
 		[1024, 768],
 
