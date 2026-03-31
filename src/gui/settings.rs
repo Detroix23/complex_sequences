@@ -110,7 +110,11 @@ where
 			// Force update.
 			if ui.button("Force update.") {
 				divergent_texture.borrow_mut()
-					.register_texture(display.get_context(), renderer.textures())
+					.register_texture(
+						display.get_context(), 
+						renderer.textures(), 
+						Option::None
+					)
 					.expect("(!) gui::default::launch_default() run_ui: can't register texture.");
 			}
 
@@ -203,7 +207,11 @@ where
 			// Force update.
 			if ui.button("Force update.") {
 				root_texture.borrow_mut()
-					.register_texture(display.get_context(), renderer.textures())
+					.register_texture(
+						display.get_context(), 
+						renderer.textures(), 
+						Option::None,
+					)
 					.expect("(!) gui::default::launch_default() run_ui: can't register texture.");
 			}
 

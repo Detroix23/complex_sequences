@@ -34,6 +34,12 @@ where
 	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Copy + 'static,
 {
 	// ## Divergence.
+	
+	// Fractal graphics.
+	divergent_texture
+		.borrow_mut()
+		.show_textures(ui, [410.0, 0.0]);
+	
 	// Settings window.
 	settings::show_settings_divergent(
 		[400.0, 600.0], 
@@ -44,19 +50,15 @@ where
 		renderer, 
 		display,
 	);
-	
-
-	// Fractal graphics.
-	divergent_texture
-		.borrow_mut()
-		.show_textures(ui, [410.0, 0.0]);
 }
 
 /// Update settings and texture of `Divergence`.
 pub fn update<F>(
 	divergent_texture: rc::Rc<cell::RefCell<fractals::divergence::Divergent<F>>>,
+	ui: &imgui::Ui,
 	renderer: &mut imgui_glium_renderer::Renderer, 
 	display: &glium::Display<glium::glutin::surface::WindowSurface>,
+	window_size: [u32; 2],
 ) -> () 
 where
 	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Copy + 'static,
@@ -65,7 +67,11 @@ where
 	if divergent_texture.borrow_mut().is_state_updated() {
 		divergent_texture
 			.borrow_mut()
-			.register_texture(display.get_context(), renderer.textures())
+			.register_texture(
+				display.get_context(), 
+				renderer.textures(), 
+				Option::Some(window_size),
+			)
 			.expect("(!) gui::default::launch_default() Divergent: update: can't register texture.");
 	}
 }

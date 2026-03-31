@@ -14,11 +14,14 @@ use crate::{
 pub trait Fractal {
 	/// Generate and register the fractal texture.
 	/// 
+	/// Put some `size` if the size need to be updated.
+	/// 
 	/// Source: `imgui-examples`, `custom_texture`
 	fn register_texture<Facade>(
         &mut self,
         gl_context: &Facade,
         textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
+		size: Option<[u32; 2]>,
     ) -> Result<(), Box<dyn error::Error>>
     where
         Facade: glium::backend::Facade;

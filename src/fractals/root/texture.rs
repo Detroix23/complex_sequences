@@ -35,9 +35,10 @@ where
 	generation_time: Option<time::Duration>,
 
 	// Parameters.
+	pub size: [u32; 2],
 	/// Size: [width, height].
-	pub size: [complex::Real; 2],
-	pub resolution: u32,
+	pub information_size: [complex::Real; 2],
+	pub scale: f32,
 	pub position: [complex::Real; 2],
 	pub zoom: complex::Real,
 	pub iterations: usize,
@@ -66,9 +67,9 @@ where
 	pub fn new(
 		function: F,
 		derivative: D,
-		size: [complex::Real; 2],
+		information_size: [complex::Real; 2],
 		position: [complex::Real; 2], 
-		resolution: u32,
+		scale: f32,
 		zoom: complex::Real,
 		iterations: usize,
 		threshold: complex::Real,
@@ -80,8 +81,9 @@ where
 			derivative,
 			iterations_total: 0usize,
 			texture_id: Option::None,
-			size, 
-			resolution,
+			size: [0, 0],
+			information_size, 
+			scale,
 			generation_time: Option::None,
 			position,
 			zoom,
@@ -137,11 +139,24 @@ where
         &mut self,
         gl_context: &Facade,
         textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
+		size: Option<[u32; 2]>,
     ) -> Result<(), Box<dyn error::Error>>
     where
         Facade: backend::Facade,
     {	
-		let size: [usize; 2] = [self.size[0] as usize, self.size[1] as usize];
+		let scaled_size: [usize; 2] = match size {
+			Option::Some(size) => {
+				self.size = size;
+				[
+					(size[0] as f32 / self.scale) as usize, 
+					(size[1] as f32 / self.scale) as usize
+				]
+			},
+			Option::None => [
+				(self.size[0] as f32 / self.scale) as usize, 
+				(self.size[1] as f32 / self.scale) as usize
+			],
+		};
 			
 		// Texture generation.
 		let generation_start: time::Instant = time::Instant::now();
@@ -152,7 +167,7 @@ where
 					&self.function, 
 					&self.derivative, 
 					self.iterations, 
-					size, 
+					scaled_size, 
 					self.position, 
 					self.zoom
 				)
@@ -175,7 +190,7 @@ where
 		self.texture_id = Option::Some(rendering::render_texture(
 			self.texture_id, 
 			data, 
-			size, 
+			scaled_size, 
 			gl_context, 
 			textures
 		).expect("(X) fractals::divergence::texture::Divergent::register_texture() render_texture error."));
@@ -195,33 +210,43 @@ where
 		Ok(())
 	}
 
+	/// Display the root fractal render and rendering information.
 	fn show_textures(&self, ui: &imgui::Ui, position: [complex::Real; 2]) {
-        ui.window("Fractal 'Root'. ")
-            .size(self.size, imgui::Condition::FirstUseEver)
+        let draw_list_background: imgui::DrawListMut<'_> = ui.get_background_draw_list();
+		let window_size: [f32; 2] = ui.window_size();
+
+		// Render `Image` in the draw list.
+		if let Some(texture_id) = self.texture_id {
+			draw_list_background
+				.add_image(texture_id, [0.0, 0.0], [self.size[0] as f32, self.size[1] as f32])
+				.build();
+		}
+		
+		ui.window("Fractal 'Root'. ")
+            .size(self.information_size, imgui::Condition::FirstUseEver)
 			.position(position, imgui::Condition::FirstUseEver)
             .build(|| {
                 ui.text(format!("Fractal 'root' texture: {}", self.method_id));
                 
-				if let Some(texture_id) = self.texture_id {
-					if let Some(generation_time) = self.generation_time 
-						&& generation_time.as_millis() != 0
-					{
-						ui.text(format!(
-							"({}; {}) = {} pixels; {} iterations in {:?} => {} iterations/ ms", 
-							self.size[0],
-							self.size[1],
-							self.size[0] * self.size[1],
-							self.iterations_total,
-							generation_time,
-							self.iterations_total as u128 / generation_time.as_millis(),
-						));
-					} else {
-						ui.text(format!("Current fractal (error: no data): "));
-					}
-
-					imgui::Image::new(texture_id, self.size)
-						.build(ui);
-                }
+				if let Some(generation_time) = self.generation_time 
+					&& generation_time.as_millis() != 0
+				{
+					ui.text(format!(
+						"Screen ({}, {})
+({}; {}) = {} pixels; {} iterations in {:?} => {} iterations/ ms", 
+						window_size[0],
+						window_size[1],
+						self.size[0],
+						self.size[1],
+						(self.size[0] * self.size[1]) as f32 / self.scale,
+						self.iterations_total,
+						generation_time,
+						self.iterations_total as u128 / generation_time.as_millis(),
+					));
+				} else {
+					ui.text(format!("Current fractal (error: no data): "));
+				}
+			
 			});
 	}
 }

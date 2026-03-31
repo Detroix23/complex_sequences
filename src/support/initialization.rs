@@ -37,7 +37,7 @@ pub fn with_startup<FInit, FUi, FUpdate>(
 where
     FInit: FnMut(&mut Context, &mut Renderer, &Display<WindowSurface>) + 'static,
     FUi: FnMut(&mut bool, &mut Ui, &mut Renderer, &Display<WindowSurface>) + 'static,
-    FUpdate: FnMut(&mut Renderer, &Display<WindowSurface>) + 'static,
+    FUpdate: FnMut(&mut Ui, &mut Renderer, &Display<WindowSurface>) + 'static,
 {
     let mut imgui: Context = create_context();
 
@@ -80,7 +80,7 @@ where
         platform.attach_window(imgui.io_mut(), &window, dpi_mode);
     }
 
-    let mut last_frame = Instant::now();
+    let mut last_frame: Instant = Instant::now();
 
     startup(&mut imgui, &mut renderer, &display);
 
@@ -104,24 +104,27 @@ where
                 event: WindowEvent::RedrawRequested,
                 ..
             } => {
-                let ui = imgui.frame();
-
-                let mut run = true;
+                let ui: &mut Ui = imgui.new_frame();
+                
+                let mut run: bool = true;
                 run_ui(&mut run, ui, &mut renderer, &display);
                 if !run {
                     window_target.exit();
                 }
 
-                update(&mut renderer, &display);
+                update(ui, &mut renderer, &display);
 
-                let mut target = display.draw();
+                let mut target: glium::Frame = display.draw();
                 target.clear_color_srgb(1.0, 1.0, 1.0, 1.0);
                 platform.prepare_render(ui, &window);
-                let draw_data = imgui.render();
+                
+                let draw_data: &imgui::DrawData = imgui.render();
                 renderer
                     .render(&mut target, draw_data)
                     .expect("(!) support::mod::init_with_startup() Rendering failed");
-                target.finish().expect("(!) support::mod::init_with_startup() Failed to swap buffers");
+                target
+                    .finish()
+                    .expect("(!) support::mod::init_with_startup() Failed to swap buffers");
             }
 
             Event::WindowEvent {
