@@ -73,7 +73,7 @@ where
 /// Updated settings and texture of `Root`.
 pub fn update<F, D>(
 	root_texture: rc::Rc<cell::RefCell<fractals::root::Root<F, D>>>,
-	ui: &imgui::Ui,
+	_ui: &imgui::Ui,
 	renderer: &mut imgui_glium_renderer::Renderer, 
 	display: &glium::Display<glium::glutin::surface::WindowSurface>,
 	window_size: [u32; 2],
@@ -82,6 +82,10 @@ where
 	F: Fn(complex::Algebraic) -> complex::Algebraic,
 	D: Fn(complex::Algebraic) -> complex::Algebraic,
 {
+	root_texture
+		.borrow_mut()
+		.update_size(window_size);
+
 	// If a setting change, draw the fractal anew.
 	if root_texture.borrow_mut().is_state_updated() {
 		root_texture
@@ -89,7 +93,6 @@ where
 			.register_texture(
 				display.get_context(), 
 				renderer.textures(), 
-				Option::Some(window_size),
 			)
 			.expect("(!) gui::default::launch_default() Root: update: can't register texture.");
 	}

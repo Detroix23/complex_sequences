@@ -84,10 +84,8 @@ where
 				divergent_texture.borrow().position[0], 
 				divergent_texture.borrow().position[1]
 			));
-
-
+			
 			ui.separator();
-
 
 			ui.text_wrapped("## Controls");	
 
@@ -113,7 +111,6 @@ where
 					.register_texture(
 						display.get_context(), 
 						renderer.textures(), 
-						Option::None
 					)
 					.expect("(!) gui::default::launch_default() run_ui: can't register texture.");
 			}
@@ -210,7 +207,6 @@ where
 					.register_texture(
 						display.get_context(), 
 						renderer.textures(), 
-						Option::None,
 					)
 					.expect("(!) gui::default::launch_default() run_ui: can't register texture.");
 			}

@@ -46,7 +46,6 @@ where
 	pub method_id: usize,
 
 	// Variables to check if state is modified.
-	constant_last: complex::Algebraic,
 	zoom_last: complex::Real,
 	position_last: [complex::Real; 2],
 	iterations_last: usize,
@@ -91,7 +90,6 @@ where
 			threshold,
 			method_id,
 
-			constant_last: Default::default(),
 			zoom_last: 1.0,
 			position_last: [0.0, 0.0],
 			iterations_last: 0,
@@ -134,29 +132,30 @@ where
 	F: Fn(complex::Algebraic) -> complex::Algebraic,
 	D: Fn(complex::Algebraic) -> complex::Algebraic,
 {
+	fn get_scale(self: &Self) -> f32 {
+		self.scale
+	}
+
+	fn get_size(self: &Self) -> [u32; 2] {
+		self.size
+	}
+
+	fn update_size(self: &mut Self, new_size: [u32; 2]) -> () {
+		self.size = new_size
+	}
 
 	fn register_texture<Facade>(
         &mut self,
         gl_context: &Facade,
         textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
-		size: Option<[u32; 2]>,
     ) -> Result<(), Box<dyn error::Error>>
     where
         Facade: backend::Facade,
     {	
-		let scaled_size: [usize; 2] = match size {
-			Option::Some(size) => {
-				self.size = size;
-				[
-					(size[0] as f32 / self.scale) as usize, 
-					(size[1] as f32 / self.scale) as usize
-				]
-			},
-			Option::None => [
-				(self.size[0] as f32 / self.scale) as usize, 
-				(self.size[1] as f32 / self.scale) as usize
-			],
-		};
+		let scaled_size: [usize; 2] = [
+			(self.size[0] as f32 / self.scale) as usize, 
+			(self.size[1] as f32 / self.scale) as usize
+		];
 			
 		// Texture generation.
 		let generation_start: time::Instant = time::Instant::now();
@@ -213,7 +212,6 @@ where
 	/// Display the root fractal render and rendering information.
 	fn show_textures(&self, ui: &imgui::Ui, position: [complex::Real; 2]) {
         let draw_list_background: imgui::DrawListMut<'_> = ui.get_background_draw_list();
-		let window_size: [f32; 2] = ui.window_size();
 
 		// Render `Image` in the draw list.
 		if let Some(texture_id) = self.texture_id {
@@ -222,29 +220,27 @@ where
 				.build();
 		}
 		
-		ui.window("Fractal 'Root'. ")
+		ui.window(format!("Rendering: Fractal 'Root' (method {}). ", self.method_id))
             .size(self.information_size, imgui::Condition::FirstUseEver)
 			.position(position, imgui::Condition::FirstUseEver)
             .build(|| {
-                ui.text(format!("Fractal 'root' texture: {}", self.method_id));
-                
 				if let Some(generation_time) = self.generation_time 
 					&& generation_time.as_millis() != 0
 				{
-					ui.text(format!(
-						"Screen ({}, {})
-({}; {}) = {} pixels; {} iterations in {:?} => {} iterations/ ms", 
-						window_size[0],
-						window_size[1],
+					ui.text(format!("Size: ({}; {});
+Pixels = {}; 
+Iterations = {};
+Time = {:?}ms;
+Speed = {} iterations/ ms;", 
 						self.size[0],
 						self.size[1],
 						(self.size[0] * self.size[1]) as f32 / self.scale,
 						self.iterations_total,
-						generation_time,
+						generation_time.as_millis(),
 						self.iterations_total as u128 / generation_time.as_millis(),
 					));
 				} else {
-					ui.text(format!("Current fractal (error: no data): "));
+					ui.text(format!("(!) Error: no data."));
 				}
 			
 			});

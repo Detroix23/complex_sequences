@@ -12,6 +12,12 @@ use crate::{
 };
 
 pub trait Fractal {
+	fn get_size(self: &Self) -> [u32; 2];
+	
+	fn get_scale(self: &Self) -> f32; 
+
+	fn update_size(self: &mut Self, new_size: [u32; 2]) -> ();
+
 	/// Generate and register the fractal texture.
 	/// 
 	/// Put some `size` if the size need to be updated.
@@ -21,7 +27,6 @@ pub trait Fractal {
         &mut self,
         gl_context: &Facade,
         textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
-		size: Option<[u32; 2]>,
     ) -> Result<(), Box<dyn error::Error>>
     where
         Facade: glium::backend::Facade;
