@@ -10,6 +10,8 @@ use std::{
 
 use complex_rust as complex;
 
+use crate::fractals::textures;
+
 /// # `IsRoot`.
 /// Define a possible root.
 /// - `No`: no root,
@@ -121,11 +123,14 @@ where
 		let mut line: Vec<IsRoot> = Vec::with_capacity(size[0]); 
 		
 		for x in 0..size[0] {
+			let complex_position = textures::position_from_pixel(
+				[x as f32, y as f32], 
+				[size[0] as f32, size[1] as f32], 
+				zoom, 
+				position
+			);
 			line.push(newton_method(
-				complex::Algebraic::new(
-					(x as complex::Real - size[0] as complex::Real / 2.0) / zoom - position[0], 
-					(y as complex::Real - size[0] as complex::Real / 2.0) / zoom - position[1],
-				), 
+				complex::Algebraic::new(complex_position[0], complex_position[1]),
 				&function, 
 				&derivative, 
 				iterations

@@ -3,13 +3,12 @@
 //! 
 //! Compute limits of sequences, and determine if they are divergent.  
 
-use std::{
-	fmt,
-	convert,
-};
+use std::{fmt, convert};
 
 use complex_rust as complex;
 use complex::Shared;
+
+use crate::fractals::textures;
 
 /// # Divergence `State`.
 /// Tell if a function explode toward infinity or remains bounded.
@@ -133,11 +132,14 @@ where
 	for y in 0..size[1] {
 		let mut line: Vec<State> = Vec::with_capacity(size[0]); 
 		for x in 0..size[0] {
+			let complex_position = textures::position_from_pixel(
+				[x as f32, y as f32], 
+				[size[0] as f32, size[1] as f32], 
+				zoom, 
+				position
+			);
 			line.push(limit(
-				complex::Algebraic::new(
-					(x as complex::Real - (size[0] as complex::Real / 2.0)) / zoom - position[0], 
-					(y as complex::Real - (size[0] as complex::Real / 2.0)) / zoom - position[1],
-				),
+				complex::Algebraic::new(complex_position[0], complex_position[1]),
 				z0,
 				&f,
 				threshold,
@@ -177,12 +179,15 @@ where
 	for y in 0..size[1] {
 		let mut line: Vec<State> = Vec::with_capacity(size[0]); 
 		for x in 0..size[0] {
+			let complex_position = textures::position_from_pixel(
+				[x as f32, y as f32], 
+				[size[0] as f32, size[1] as f32], 
+				zoom, 
+				position
+			);
 			line.push(limit(
 				c,
-				complex::Algebraic::new(
-					(x as complex::Real - size[0] as complex::Real / 2.0) / zoom - position[0], 
-					(y as complex::Real - size[0] as complex::Real / 2.0) / zoom - position[1],
-				),
+				complex::Algebraic::new(complex_position[0], complex_position[1]),
 				&f,
 				threshold,
 				iterations,

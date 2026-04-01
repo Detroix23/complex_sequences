@@ -6,10 +6,7 @@ use std::error;
 use glium; 
 use complex_rust as complex;
 
-use crate::{
-	fractals,
-	gui,
-};
+use crate::{fractals, gui};
 
 pub trait Fractal {
 	fn get_size(self: &Self) -> [u32; 2];
@@ -153,3 +150,13 @@ pub fn convert_root_table_to_data(
 		iterations_total,
 	}
 }
+
+pub fn position_from_pixel(
+	coordinates: [complex::Real; 2], 
+	size: [complex::Real; 2],
+	zoom: complex::Real,
+	position: [complex::Real; 2],
+) -> [complex::Real; 2] {[
+	(coordinates[0] - size[0] / 2.0) / zoom - position[0], 
+	(coordinates[1] - size[1] / 2.0) / zoom - position[1],
+]}
