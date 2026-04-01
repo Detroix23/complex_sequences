@@ -14,7 +14,7 @@ use complex_rust as complex;
 
 use crate::support;
 use crate::fractals;
-use crate::gui::{self, settings, debug};
+use crate::gui::{settings, color, debug, grid};
 
 
 const WINDOW_SIZE: [u32; 2] = [1024, 768];
@@ -37,8 +37,8 @@ pub fn launch_default() -> () {
 		50,
 		2.0,
 		0,
-		gui::color::Rgb::new(0, 5, 15),
-		gui::color::Rgb::new(255, 250, 240),
+		color::Rgb::new(0, 5, 15),
+		color::Rgb::new(255, 250, 240),
 	);
 	// Necessary for the closure.
 	let divergent_texture_update = divergent_texture.clone();
@@ -53,11 +53,18 @@ pub fn launch_default() -> () {
 		50,
 		1.0,
 		0,
-		gui::color::Rgb::new(0, 0, 0),
+		color::Rgb::new(0, 0, 0),
 	);
 	let root_texture_update = root_texture.clone();
 
 	let debug_texture = debug::DebugTexture::new();
+
+	let grid_update: rc::Rc<cell::RefCell<grid::Grid>> = grid::Grid::new(
+		color::Rgb::new(100, 100, 110),
+		100, 
+		2,
+	);
+	let grid_draw = grid_update.clone();
 
 	let settings_state = rc::Rc::new(cell::RefCell::new(settings::Settings::default()));
 	let settings_state_update = settings_state.clone();
@@ -114,6 +121,16 @@ pub fn launch_default() -> () {
 					settings_state.borrow().method_id
 				),
 			};
+
+			if settings_state.borrow().enable_grid {
+				grid::draw(
+					settings_state.clone(), 
+					ui, 
+					grid_draw.clone(), 
+					renderer, 
+					display
+				);
+			}
 		},
 
 		move |
@@ -143,6 +160,16 @@ pub fn launch_default() -> () {
 					window_size.into(),
 				),
 				_ => panic!("(X) `method` ({}) not implemented. ", settings_state_update.borrow().method_id),
+			}
+
+			if settings_state_update.borrow().enable_grid {
+				grid::update(
+					grid_update.clone(), 
+					ui, 
+					renderer, 
+					display, 
+					window_size.into(),
+				);
 			}
 		},
 	);

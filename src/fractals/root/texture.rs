@@ -188,10 +188,11 @@ where
 		
 		self.texture_id = Option::Some(rendering::render_texture(
 			self.texture_id, 
-			data, 
+			data.raw_pixels, 
 			scaled_size, 
 			gl_context, 
-			textures
+			textures,
+			rendering::ColorFormat::RGB,
 		).expect("(X) fractals::divergence::texture::Divergent::register_texture() render_texture error."));
 		
 		eprintln!(

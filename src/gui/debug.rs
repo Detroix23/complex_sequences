@@ -64,10 +64,11 @@ impl DebugTexture {
 		
 		self.texture_id = Option::Some(rendering::render_texture(
 			self.texture_id, 
-			data, 
+			data.raw_pixels, 
 			[360, 1], 
 			gl_context, 
-			textures
+			textures,
+			rendering::ColorFormat::RGB,
 		).expect("(X) gui::debug::DebugTexture::register_texture() render_texture error."));
 
 		Ok(())

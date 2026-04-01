@@ -128,15 +128,15 @@ pub fn limit_on_screen_mandelbrot<F>(
 where
 	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic,
 {
-	let mut grid: Vec<Vec<State>> = Vec::with_capacity(size[0] * size[1]);
+	let mut grid: Vec<Vec<State>> = Vec::with_capacity(size[1]);
 
 	for y in 0..size[1] {
 		let mut line: Vec<State> = Vec::with_capacity(size[0]); 
 		for x in 0..size[0] {
 			line.push(limit(
 				complex::Algebraic::new(
-					(x as complex::Real - size[0] as complex::Real / 2.0) / zoom - position[0], 
-					(y as complex::Real - size[0] as complex::Real / 2.0) / zoom - position[1],
+					(x as complex::Real - (size[0] as complex::Real / 2.0)) / zoom - position[0], 
+					(y as complex::Real - (size[0] as complex::Real / 2.0)) / zoom - position[1],
 				),
 				z0,
 				&f,
@@ -172,7 +172,7 @@ pub fn limit_on_screen_julia<F>(
 where
 	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic,
 {
-	let mut grid: Vec<Vec<State>> = Vec::with_capacity(size[0] * size[1]);
+	let mut grid: Vec<Vec<State>> = Vec::with_capacity(size[1]);
 
 	for y in 0..size[1] {
 		let mut line: Vec<State> = Vec::with_capacity(size[0]); 

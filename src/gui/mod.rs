@@ -3,8 +3,9 @@
 //! 
 //! Main GUI.
 
-pub mod settings;
+mod debug;
 mod inputs;
+pub mod settings;
 pub mod defaults;
 pub mod color;
-mod debug;
+pub mod grid;

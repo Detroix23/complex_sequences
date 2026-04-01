@@ -10,7 +10,10 @@ use glium::{
 };
 use imgui_glium_renderer;
 
-use crate::fractals;
+pub enum ColorFormat {
+	RGB,
+	RGBA,
+}
 
 /// Register and render a texture:
 /// - from image information: `texture_id`, `data`, `size`,
@@ -19,20 +22,24 @@ use crate::fractals;
 /// Returns the new texture id. 
 pub fn render_texture<Facade>(
 	texture_id: Option<imgui::TextureId>,
-	data: fractals::textures::Data,
+	data: Vec<u8>,
 	size: [usize; 2],
 	gl_context: &Facade,
 	textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
+	format: ColorFormat,
 ) -> Result<imgui::TextureId, Box<dyn std::error::Error>> 
 where
 	Facade: backend::Facade,
 {
 	// Render (from `imgui-examples`, `custom_texture`).
 	let raw = texture::RawImage2d {
-		data: borrow::Cow::Owned(data.raw_pixels),
+		data: borrow::Cow::Owned(data),
 		width: size[0] as u32,
 		height: size[1] as u32,
-		format: texture::ClientFormat::U8U8U8,
+		format: match format {
+			ColorFormat::RGB => texture::ClientFormat::U8U8U8,
+			ColorFormat::RGBA => texture::ClientFormat::U8U8U8U8,
+		},
 	};
 
 	let gl_texture = glium::Texture2d::new(gl_context, raw)?;

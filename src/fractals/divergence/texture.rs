@@ -6,21 +6,19 @@
 //! - Julia.
 
 use std::{
-	borrow, 
 	cell, 
 	error, 
 	rc, 
 	time,
 };
 
-use glium::{
-	self, backend, texture, uniforms
-};
+use glium::{self, backend};
 use imgui;
 use imgui_glium_renderer;
 use complex_rust as complex;
 
 use crate::{fractals, gui};
+use crate::support::rendering;
 
 
 /// # `Divergent`, drawing board for `imgui`.
@@ -147,7 +145,7 @@ where
 	fn get_size(self: &Self) -> [u32; 2] {
 		self.size
 	}
-
+	
 	fn update_size(self: &mut Self, new_size: [u32; 2]) -> () {
 		self.size = new_size
 	}
@@ -200,35 +198,15 @@ where
 		self.iterations_total = data.iterations_total;
 		self.generation_time = Option::Some(generation_start.elapsed());
 		
-		// Render (from `imgui-examples`, `custom_texture`).
-		let raw = texture::RawImage2d {
-			data: borrow::Cow::Owned(data.raw_pixels),
-			width: scaled_size[0] as u32,
-			height: scaled_size[1] as u32,
-			format: texture::ClientFormat::U8U8U8,
-		};
+		self.texture_id = Option::Some(rendering::render_texture(
+			self.texture_id, 
+			data.raw_pixels, 
+			scaled_size, 
+			gl_context, 
+			textures,
+			rendering::ColorFormat::RGB,
+		).expect("(X) fractals::divergence::texture::Divergent::register_texture() render_texture error."));
 
-		let gl_texture = glium::Texture2d::new(gl_context, raw)?;
-		
-		let texture = imgui_glium_renderer::Texture {
-			texture: rc::Rc::new(gl_texture),
-			sampler: uniforms::SamplerBehavior {
-				magnify_filter: uniforms::MagnifySamplerFilter::Linear,
-				minify_filter: uniforms::MinifySamplerFilter::Linear,
-				..Default::default()
-			},
-		};
-
-		match self.texture_id {
-			Option::None => {
-				let texture_id = textures.insert(texture);
-            	self.texture_id = Some(texture_id);
-			},
-			Option::Some(id) => {
-				textures.replace(id, texture);
-			}
-		}
-		
 		eprintln!(
 			"(?) Divergent: t={} zoom={} pos=({}; {})", 
 			match self.generation_time {

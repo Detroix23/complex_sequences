@@ -30,13 +30,15 @@ pub struct Settings {
 	/// 2. Roots,
 	/// ```
 	pub method_id: usize,
+	pub enable_grid: bool,
 }
 
 impl Default for Settings {
 	fn default() -> Self {
 		Settings { 
 			// 0 is debug.
-			method_id: 1usize  
+			method_id: 1usize, 
+			enable_grid: true,
 		}
 	}
 }
