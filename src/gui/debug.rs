@@ -7,6 +7,7 @@ use std::{rc, cell, error};
 
 use imgui;
 use glium;
+use glium::backend::Facade;
 
 use crate::gui::{settings, color};
 use crate::support::rendering;
@@ -89,7 +90,7 @@ impl DebugTexture {
 	}
 }
 
-/// Draw the UI of the debug state.
+/// Draw the UI of the `DebugTexture`.
 pub fn draw(
 	settings: &mut settings::Settings, 
 	ui: &imgui::Ui,
@@ -103,10 +104,19 @@ pub fn draw(
 	);
 
 	debug_texture
-		.borrow_mut()
+		.borrow()
 		.hsv_show(ui);
 }
 
-pub fn update() -> () {
-
+/// Update the `DebugTexture`.
+pub fn update(
+	debug_texture: rc::Rc<cell::RefCell<DebugTexture>>,
+	_ui: &imgui::Ui,
+	renderer: &mut imgui_glium_renderer::Renderer, 
+	display: &glium::Display<glium::glutin::surface::WindowSurface>,
+) -> () {
+	debug_texture
+		.borrow_mut()
+		.register_texture(display.get_context(), renderer.textures())
+		.expect("debug::update() Can't register textures.");
 }

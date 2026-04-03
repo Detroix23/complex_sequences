@@ -58,6 +58,7 @@ pub fn launch_default() -> () {
 	let root_texture_update = root_texture.clone();
 
 	let debug_texture = debug::DebugTexture::new();
+	let debug_texture_update = debug_texture.clone();
 
 	let grid_update: rc::Rc<cell::RefCell<grid::Grid>> = grid::Grid::new(
 		color::Rgb::new(100, 100, 110),
@@ -144,7 +145,12 @@ pub fn launch_default() -> () {
 			}
 			// Fractal controls update.
 			match &settings_state_update.borrow().method_id {
-				0 => debug::update(),
+				0 => debug::update(
+					debug_texture_update.clone(),
+					ui,
+					renderer, 
+					display,
+				),
 				1 => fractals::divergence::app::update(
 					divergent_texture_update.clone(),
 					ui,
