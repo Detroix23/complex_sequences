@@ -153,6 +153,7 @@ pub fn launch_default() -> () {
 				),
 				1 => fractals::divergence::app::update(
 					divergent_texture_update.clone(),
+					settings_state_update.clone(),
 					ui,
 					renderer, 
 					display,
@@ -160,6 +161,7 @@ pub fn launch_default() -> () {
 				),
 				2 => fractals::root::app::update(
 					root_texture_update.clone(),
+					settings_state_update.clone(),
 					ui,
 					renderer, 
 					display,

@@ -1,12 +1,56 @@
 //! # Complex sequences.
 //! src/fractals/textures.rs
 
-use std::error;
+use std::{error, fmt, convert};
 
 use glium; 
 use complex_rust as complex;
 
-use crate::{fractals, gui};
+use crate::fractals;
+use crate::gui::color;
+
+/// `ColorMode`:
+/// ```
+/// 0. `GRAYSCALE`,
+/// 1. `HSV`.
+/// ``````
+#[derive(Clone, Copy)]
+pub enum ColorMode {
+	GRAYSCALE,
+	HSV,
+}
+
+impl ColorMode {
+	/// Returns a vector of all `ColorMode`s.
+	pub fn list() -> Vec<ColorMode> {
+		vec![
+			ColorMode::GRAYSCALE,
+			ColorMode::HSV,
+		]
+	}
+
+	fn to_static_str(self: &Self) -> &'static str {
+		match &self {
+			ColorMode::GRAYSCALE => "0. Grayscale.",
+			ColorMode::HSV => "1. HSV.",
+		}
+	}
+}
+
+impl fmt::Display for ColorMode {
+	fn fmt(self: &Self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+		write!(formatter, "Method::{}", match &self {
+			ColorMode::GRAYSCALE => "Grayscale",
+			ColorMode::HSV => "HSV",
+		})
+	}
+}
+
+impl convert::AsRef<str> for ColorMode {
+	fn as_ref(self: &Self) -> &str {
+		&self.to_static_str()
+	}
+}
 
 pub trait Fractal {
 	fn get_size(self: &Self) -> [u32; 2];
@@ -24,6 +68,7 @@ pub trait Fractal {
         &mut self,
         gl_context: &Facade,
         textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
+		color_mode: fractals::textures::ColorMode,
     ) -> Result<(), Box<dyn error::Error>>
     where
         Facade: glium::backend::Facade;
@@ -43,9 +88,10 @@ pub struct Data {
 /// Convert a 2D `table`: `Vec<Vec<State>>` into `Vec<u8>` of raw `data`. 
 pub fn convert_state_table_to_data(
 	table: Vec<Vec<fractals::divergence::State>>, 
-	stable: gui::color::Rgb, 
-	divergent: gui::color::Rgb,
+	stable: color::Rgb, 
+	divergent: color::Rgb,
 	iterations_max: usize,
+	color_mode: ColorMode,
 ) -> Data {
 	let mut data: Vec<u8> = Vec::new();
 	let mut iterations_total: usize = 0;
@@ -54,9 +100,27 @@ pub fn convert_state_table_to_data(
 		for state in line {
 			match state {
 				fractals::divergence::State::Divergent{ iterations } => {
-					data.push((divergent.red as usize * iterations / iterations_max) as u8);
-					data.push((divergent.green as usize * iterations / iterations_max) as u8);
-					data.push((divergent.blue as usize * iterations / iterations_max) as u8);
+					let weight: f64 = iterations as f64 / iterations_max as f64;
+
+					match color_mode {
+						ColorMode::HSV => {
+							let color: color::Rgb = color::Hsv::new(weight * 359.9, 1.0, 1.0).to_rgb();
+							data.push(color.red);
+							data.push(color.green);
+							data.push(color.blue);
+						},
+						_ => {
+							let color: color::Rgb = color::Rgb::new(
+								(divergent.red as f64 * weight) as u8,
+								(divergent.green as f64 * weight) as u8,
+								(divergent.blue as f64 * weight) as u8,
+							);
+							data.push(color.red);
+							data.push(color.green);
+							data.push(color.blue);
+						}
+
+					}
 
 					iterations_total += iterations;
 				},
@@ -99,7 +163,7 @@ fn extract_unique_roots(
 /// Convert a 2D `table`: `Vec<Vec<Root>>` into `Vec<u8>` of raw `data`. 
 pub fn convert_root_table_to_data(
 	table: Vec<Vec<fractals::root::IsRoot>>,
-	no_root_color: gui::color::Rgb,
+	no_root_color: color::Rgb,
 	iterations_max: usize,
 ) -> Data {
 	let mut data: Vec<u8> = Vec::new();
@@ -128,12 +192,11 @@ pub fn convert_root_table_to_data(
 							root,
 						));
 
-					let color = gui::color::Hsv::new(
-						(root_id / roots.len() * 360) as f64, 
+					let color = color::Hsv::new(
+						root_id as f64 / roots.len() as f64 * 360.0, 
 						1.0, 
 						1.0
 					).to_rgb();
-
 
 					data.push(color.red);
 					data.push(color.green);

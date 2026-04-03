@@ -14,10 +14,8 @@ use glium::backend::Facade;
 use imgui;
 use complex_rust as complex;
 
-use crate::fractals::{
-	self,
-	textures::Fractal,
-};
+use crate::fractals;
+use crate::fractals::textures::Fractal;
 use crate::gui;
 
 /// # `Settings` state.
@@ -31,6 +29,8 @@ pub struct Settings {
 	/// ```
 	pub method_id: usize,
 	pub enable_grid: bool,
+	pub color_mode_id: usize,
+	pub color_mode: fractals::ColorMode,
 }
 
 impl Default for Settings {
@@ -39,6 +39,8 @@ impl Default for Settings {
 			// 0 is debug.
 			method_id: 1usize, 
 			enable_grid: true,
+			color_mode_id: 0,
+			color_mode: fractals::textures::ColorMode::GRAYSCALE,
 		}
 	}
 }
@@ -46,8 +48,7 @@ impl Default for Settings {
 /// A `combo` selector for the general fractal family.
 /// 
 /// Item shared in all family. 
-fn family_selector(ui: &imgui::Ui, settings: &mut Settings) {
-	// 
+fn family_selector(ui: &imgui::Ui, settings: &mut Settings) -> () {
 	ui.combo(
 		"Method", 
 		&mut settings.method_id, 
@@ -56,6 +57,22 @@ fn family_selector(ui: &imgui::Ui, settings: &mut Settings) {
 	);
 } 
 
+/// A `combo` selector for the color mode.
+fn color_mode_selector(ui: &imgui::Ui, settings: rc::Rc<cell::RefCell<Settings>>) -> () {
+	let mut color_mode_id: usize = settings.borrow().color_mode_id;
+	
+	ui.combo(
+		"Color mode", 
+		&mut color_mode_id, 
+		&fractals::ColorMode::list(), 
+		| mode: &fractals::ColorMode | {
+			settings.borrow_mut().color_mode = mode.clone();
+			borrow::Cow::Borrowed(mode.as_ref())
+		},
+	);
+
+	settings.borrow_mut().color_mode_id = color_mode_id;
+}
 
 /// Show a settings window to read and modify values of the current fractal.
 /// 
@@ -63,7 +80,7 @@ fn family_selector(ui: &imgui::Ui, settings: &mut Settings) {
 pub fn show_settings_divergent<F>(
 	size: [complex::Real; 2],
 	position: [complex::Real; 2],
-	settings: &mut Settings,
+	settings: rc::Rc<cell::RefCell<Settings>>,
 	ui: &imgui::Ui,
 	// Rc<RefCell<Divergent<impl Fn(Algebraic, Algebraic) -> Algebraic>>>
 	divergent_texture: rc::Rc<cell::RefCell<fractals::divergence::Divergent<F>>>,
@@ -94,7 +111,7 @@ where
 			// General fractal family.
 			ui.combo(
 				"Method", 
-				&mut settings.method_id, 
+				&mut settings.borrow_mut().method_id, 
 				&fractals::Method::list(), 
 				| method: &fractals::Method | borrow::Cow::Borrowed(method.as_ref()),
 			);
@@ -105,7 +122,7 @@ where
 				&fractals::divergence::LimitMethod::list(),
 				| limit: &fractals::divergence::LimitMethod | borrow::Cow::Borrowed(limit.as_ref()),
 			);
-
+			color_mode_selector(ui, settings.clone());
 
 			// Force update.
 			if ui.button("Force update.") {
@@ -113,6 +130,7 @@ where
 					.register_texture(
 						display.get_context(), 
 						renderer.textures(), 
+						settings.borrow().color_mode,
 					)
 					.expect("(!) gui::default::launch_default() run_ui: can't register texture.");
 			}
@@ -209,6 +227,7 @@ where
 					.register_texture(
 						display.get_context(), 
 						renderer.textures(), 
+						settings.color_mode,
 					)
 					.expect("(!) gui::default::launch_default() run_ui: can't register texture.");
 			}

@@ -148,6 +148,7 @@ where
         &mut self,
         gl_context: &Facade,
         textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
+		color_mode: fractals::textures::ColorMode,
     ) -> Result<(), Box<dyn error::Error>>
     where
         Facade: backend::Facade,

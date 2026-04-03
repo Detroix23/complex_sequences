@@ -10,6 +10,8 @@ pub mod textures;
 pub mod divergence;
 pub mod root;
 
+pub use textures::ColorMode;
+
 /// # Fractal drawing `Method`.
 /// Choose which fractal "family" to draw. 
 /// To `usize`:

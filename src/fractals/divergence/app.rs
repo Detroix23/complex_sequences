@@ -44,7 +44,7 @@ where
 	settings::show_settings_divergent(
 		[400.0, 600.0], 
 		[0.0, 0.0], 
-		&mut settings_state.borrow_mut(),
+		settings_state.clone(),
 		ui, 
 		divergent_texture.clone(), 
 		renderer, 
@@ -55,6 +55,7 @@ where
 /// Update settings and texture of `Divergence`.
 pub fn update<F>(
 	divergent_texture: rc::Rc<cell::RefCell<fractals::divergence::Divergent<F>>>,
+	settings_state: rc::Rc<cell::RefCell<settings::Settings>>,
 	_ui: &imgui::Ui,
 	renderer: &mut imgui_glium_renderer::Renderer, 
 	display: &glium::Display<glium::glutin::surface::WindowSurface>,
@@ -74,6 +75,7 @@ where
 			.register_texture(
 				display.get_context(), 
 				renderer.textures(), 
+				settings_state.borrow().color_mode,
 			)
 			.expect("(!) gui::default::launch_default() Divergent: update: can't register texture.");
 	}

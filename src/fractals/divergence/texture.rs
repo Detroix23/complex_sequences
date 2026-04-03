@@ -154,6 +154,7 @@ where
         &mut self,
         gl_context: &Facade,
         textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
+		color_mode: fractals::textures::ColorMode,
     ) -> Result<(), Box<dyn error::Error>>
     where
         Facade: backend::Facade,
@@ -193,6 +194,7 @@ where
 			self.color_stable,
 			self.color_divergent,
 			self.iterations,
+			color_mode,
 		);
 
 		self.iterations_total = data.iterations_total;

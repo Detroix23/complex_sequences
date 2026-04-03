@@ -73,6 +73,7 @@ where
 /// Updated settings and texture of `Root`.
 pub fn update<F, D>(
 	root_texture: rc::Rc<cell::RefCell<fractals::root::Root<F, D>>>,
+	settings_state: rc::Rc<cell::RefCell<settings::Settings>>,
 	_ui: &imgui::Ui,
 	renderer: &mut imgui_glium_renderer::Renderer, 
 	display: &glium::Display<glium::glutin::surface::WindowSurface>,
@@ -93,6 +94,7 @@ where
 			.register_texture(
 				display.get_context(), 
 				renderer.textures(), 
+				settings_state.borrow().color_mode
 			)
 			.expect("(!) gui::default::launch_default() Root: update: can't register texture.");
 	}
