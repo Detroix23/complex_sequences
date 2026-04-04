@@ -4,7 +4,7 @@
 //! Try to find roots of a complex function.
 
 use std::{
-	convert, fmt, io::Cursor
+	convert, fmt
 };
 
 use complex_rust::{self as complex, Shared};
