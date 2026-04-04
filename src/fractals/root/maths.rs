@@ -3,9 +3,7 @@
 //! 
 //! Try to find roots of a complex function.
 
-use std::{
-	convert, fmt
-};
+use std::{convert, fmt};
 
 use complex_rust::{self as complex, Shared};
 
