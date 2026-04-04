@@ -130,6 +130,10 @@ where
 					.expect("(!) gui::default::launch_default() run_ui: can't register texture.");
 			}
 
+			// Scale.
+			ui.slider_config("Resolution scale", 1.0, 10.0)
+				.build(&mut divergent_texture.borrow_mut().scale);
+
 			// Zoom slider.
 			ui.slider_config("Zoom", 1.0, 100000.0)
 				.flags(
@@ -229,6 +233,10 @@ where
 					)
 					.expect("(!) gui::default::launch_default() run_ui: can't register texture.");
 			}
+
+			// Scale.
+			ui.slider_config("Resolution scale", 1.0, 10.0)
+				.build(&mut root_texture.borrow_mut().scale);
 
 			// Zoom slider.
 			ui.slider_config("Zoom", 1.0, 100000.0)

@@ -46,6 +46,7 @@ where
 	iterations_last: usize,
 	threshold_last: complex::Real,
 	method_id_last: usize,
+	scale_last: f32,
 
 	/// Graphics.
 	color_no_root: gui::color::Rgb,
@@ -90,6 +91,7 @@ where
 			iterations_last: 0,
 			threshold_last: 0.0,
 			method_id_last: 0,
+			scale_last: 1.0,
 
 			color_no_root,
 		}))
@@ -99,23 +101,22 @@ where
 	/// 
 	/// Returns `true` if any of them is different.
 	pub fn is_state_updated(self: &mut Self) -> bool {
-		let mut updated: bool = false;
+		let mut updated: bool = true;
 
 		if self.zoom_last != self.zoom {
-			updated = true;
 			self.zoom_last = self.zoom;
 		} else if self.position_last != self.position {
-			updated = true;
 			self.position_last = self.position;
 		} else if self.iterations_last != self.iterations {
-			updated = true;
 			self.iterations_last = self.iterations;
 		} else if self.threshold_last != self.threshold {
-			updated = true;
 			self.threshold_last = self.threshold;
 		} else if self.method_id_last != self.method_id {
-			updated = true;
 			self.method_id_last = self.method_id;
+		} else if self.scale_last != self.scale {
+			self.scale_last = self.scale
+		} else {	
+			updated = false;
 		}
 
 		updated
