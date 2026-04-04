@@ -7,8 +7,5 @@ mod maths;
 pub mod texture;
 pub mod app;
 
-pub use maths::{
-	IsRoot,
-	RootMethod,
-};
+pub use maths::{IsRoot, RootMethod};
 pub use texture::Root;
