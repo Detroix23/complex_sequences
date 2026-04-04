@@ -5,12 +5,7 @@
 //! - Mandelbrot,
 //! - Julia.
 
-use std::{
-	cell, 
-	error, 
-	rc, 
-	time,
-};
+use std::{cell, error, rc, time};
 
 use glium::{self, backend};
 use imgui;
@@ -138,14 +133,6 @@ impl<F> fractals::textures::Fractal for Divergent<F>
 where
 	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Clone,
 {
-	fn get_scale(self: &Self) -> f32 {
-		self.scale
-	}
-
-	fn get_size(self: &Self) -> [u32; 2] {
-		self.size
-	}
-	
 	fn update_size(self: &mut Self, new_size: [u32; 2]) -> () {
 		self.size = new_size
 	}
@@ -175,7 +162,7 @@ where
 				self.iterations, 
 				scaled_size,
 				self.position,
-				self.zoom,
+				self.zoom / self.scale,
 			),
 			1 => fractals::divergence::maths::limit_on_screen_julia(
 				self.constant, 
@@ -184,7 +171,7 @@ where
 				self.iterations, 
 				scaled_size,
 				self.position,
-				self.zoom,
+				self.zoom / self.scale,
 			),
 			_ => panic!("(X) fractals::divergence_texture::Divergent::register_texture() `method_id` unknown ({}).", self.method_id),
 		};
@@ -243,7 +230,7 @@ where
 					&& generation_time.as_millis() != 0
 				{
 					ui.text(format!("Size: ({}; {});
-Pixels = {}; 
+Pixels = {:.0}; 
 Iterations = {};
 Time = {}ms;
 Speed = {} iterations/ ms;", 

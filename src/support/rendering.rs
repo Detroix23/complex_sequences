@@ -15,6 +15,12 @@ pub enum ColorFormat {
 	RGBA,
 }
 
+/// # Named tuple for `ViewportSettings`.
+pub struct ViewportSettings {
+	pub position: [f32; 2],
+	pub zoom: f32,
+}
+
 /// Register and render a texture:
 /// - from image information: `texture_id`, `data`, `size`,
 /// - to registers `gl_context`, `textures`.

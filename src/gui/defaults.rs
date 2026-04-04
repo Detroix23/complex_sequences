@@ -14,7 +14,7 @@ use complex_rust as complex;
 
 use crate::support;
 use crate::fractals;
-use crate::gui::{settings, color, debug, grid};
+use crate::gui::{settings, color, debug, grid, mouse};
 
 
 const WINDOW_SIZE: [u32; 2] = [1024, 768];
@@ -139,10 +139,42 @@ pub fn launch_default() -> () {
 			renderer: &mut imgui_glium_renderer::Renderer, 
 			display: &glium::Display<glium::glutin::surface::WindowSurface>,
 		| {
+			// Listen for window resizing.
 			if display.get_framebuffer_dimensions() != window_size {
 				window_size = display.get_framebuffer_dimensions();
 				println!("(?) Window size update: x={}, y={}", window_size.0, window_size.1);
 			}
+			
+			// Listen to inputs.
+			match &settings_state_update.borrow().method_id {
+				0 => {},
+				1 => {
+					let viewport_update = mouse::listen(
+						&ui,
+						window_size,
+						divergent_texture_update.borrow().position,
+						divergent_texture_update.borrow().zoom,
+						divergent_texture_update.borrow().scale,
+					);
+
+					divergent_texture_update.borrow_mut().position = viewport_update.position;
+					divergent_texture_update.borrow_mut().zoom = viewport_update.zoom;
+				},
+				2 => {
+					let viewport_update = mouse::listen(
+						&ui,
+						window_size,
+						root_texture_update.borrow().position,
+						root_texture_update.borrow().zoom,
+						root_texture_update.borrow().scale,
+					);
+
+					root_texture_update.borrow_mut().position = viewport_update.position;
+					root_texture_update.borrow_mut().zoom = viewport_update.zoom;
+				},
+				_ => panic!("(X) `method` ({}) not implemented. ", settings_state_update.borrow().method_id),
+			}
+
 			// Fractal controls update.
 			match &settings_state_update.borrow().method_id {
 				0 => debug::update(

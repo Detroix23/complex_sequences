@@ -53,10 +53,6 @@ impl convert::AsRef<str> for ColorMode {
 }
 
 pub trait Fractal {
-	fn get_size(self: &Self) -> [u32; 2];
-	
-	fn get_scale(self: &Self) -> f32; 
-
 	fn update_size(self: &mut Self, new_size: [u32; 2]) -> ();
 
 	/// Generate and register the fractal texture.
