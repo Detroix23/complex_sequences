@@ -124,8 +124,8 @@ where
 		} else if self.method_id_last != self.method_id {
 			self.method_id_last = self.method_id;
 		} else if self.scale_last != self.scale {
-			self.scale_last = self.scale;
-		} else {
+			self.scale_last = self.scale
+		} else {	
 			updated = false;
 		}
 
