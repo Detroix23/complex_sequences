@@ -3,12 +3,7 @@
 //!
 //! Draw the texture for a Newton fractal.
 
-use std::{
-	cell, 
-	error, 
-	rc, 
-	time,
-};
+use std::{cell, error, rc, time};
 
 use glium::{
 	self, backend
