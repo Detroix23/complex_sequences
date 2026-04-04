@@ -3,14 +3,7 @@
 //! 
 //! Try to find roots of a complex function.
 
-<<<<<<< HEAD
-use std::{convert, fmt};
-=======
-use std::{
-	fmt,
-	convert,
-};
->>>>>>> parent of 7dc08bc (Root fractal: first version working.)
+use std::{fmt, convert};
 
 use complex_rust as complex;
 

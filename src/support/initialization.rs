@@ -69,7 +69,7 @@ where
     {
         let dpi_mode = if let Ok(factor) = std::env::var("IMGUI_EXAMPLE_FORCE_DPI_FACTOR") {
             // Allow forcing of HiDPI factor for debugging purposes
-            match factor.parse::<f32>() {
+            match factor.parse::<f64>() {
                 Ok(f) => HiDpiMode::Locked(f),
                 Err(e) => panic!("Invalid scaling factor: {}", e),
             }
