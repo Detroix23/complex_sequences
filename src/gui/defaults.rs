@@ -44,8 +44,8 @@ pub fn launch_default() -> () {
 	let divergent_texture_update = divergent_texture.clone();
 
 	let root_texture = fractals::root::Root::new(
-		|z: complex_rust::Algebraic| z * z * z * z * z + complex::Algebraic::new(1.0, 0.0),
-		|z: complex_rust::Algebraic| complex::Algebraic::new(4.0, 0.0) * z * z * z * z,
+		|z: complex_rust::Algebraic| z * z * z * z + complex::Algebraic::new(1.0, 0.0),
+		|z: complex_rust::Algebraic| complex::Algebraic::new(4.0, 0.0) * z * z * z,
 		[400.0, 100.0],
 		[0.0, 0.0],
 		1.0,
@@ -99,7 +99,7 @@ pub fn launch_default() -> () {
 			
 			match method_id_current {
 				0 => debug::draw(
-					settings_state.clone(),
+					&mut settings_state.borrow_mut(),
 					ui, 
 					debug_texture.clone(),
 				),

@@ -51,6 +51,7 @@ where
 	iterations_last: usize,
 	threshold_last: complex::Real,
 	method_id_last: usize,
+	scale_last: f32,
 
 	/// Graphics.
 	color_no_root: gui::color::Rgb,
@@ -95,6 +96,7 @@ where
 			iterations_last: 0,
 			threshold_last: 0.0,
 			method_id_last: 0,
+			scale_last: 1.0,
 
 			color_no_root,
 		}))
@@ -104,23 +106,22 @@ where
 	/// 
 	/// Returns `true` if any of them is different.
 	pub fn is_state_updated(self: &mut Self) -> bool {
-		let mut updated: bool = false;
+		let mut updated: bool = true;
 
 		if self.zoom_last != self.zoom {
-			updated = true;
 			self.zoom_last = self.zoom;
 		} else if self.position_last != self.position {
-			updated = true;
 			self.position_last = self.position;
 		} else if self.iterations_last != self.iterations {
-			updated = true;
 			self.iterations_last = self.iterations;
 		} else if self.threshold_last != self.threshold {
-			updated = true;
 			self.threshold_last = self.threshold;
 		} else if self.method_id_last != self.method_id {
-			updated = true;
 			self.method_id_last = self.method_id;
+		} else if self.scale_last != self.scale {
+			self.scale_last = self.scale;
+		} else {
+			updated = false;
 		}
 
 		updated
@@ -148,31 +149,29 @@ where
         &mut self,
         gl_context: &Facade,
         textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
-		_color_mode: fractals::textures::ColorMode,
+		color_mode: fractals::textures::ColorMode,
     ) -> Result<(), Box<dyn error::Error>>
     where
         Facade: backend::Facade,
     {	
 		let scaled_size: [usize; 2] = [
 			(self.size[0] as f32 / self.scale) as usize, 
-			(self.size[1] as f32 / self.scale) as usize,
+			(self.size[1] as f32 / self.scale) as usize
 		];
-		let mut root_finder: fractals::root::maths::RootFinder<&F, &D> = fractals::root::maths::RootFinder::new(
-			&self.function, 
-			&self.derivative, 
-			self.threshold,
-			self.iterations, 
-			scaled_size, 
-			self.position, 
-			self.zoom,
-		);
 			
 		// Texture generation.
 		let generation_start: time::Instant = time::Instant::now();
 
 		let table: Vec<Vec<fractals::root::IsRoot>> = match self.method_id {
 			0 => {
-				root_finder.limit_on_screen()
+				fractals::root::maths::limit_on_screen_root(
+					&self.function, 
+					&self.derivative, 
+					self.iterations, 
+					scaled_size, 
+					self.position, 
+					self.zoom
+				)
 			},
 			_ => panic!(
 				"(X) fractals::divergence::texture::Divergent::register_texture() `method_id` unknown ({}).", 
@@ -182,8 +181,6 @@ where
 
 		let data: fractals::textures::Data = fractals::textures::convert_root_table_to_data(
 			table, 
-			root_finder.get_roots(),
-			root_finder.get_threshold(),
 			self.color_no_root,
 			self.iterations,
 		);
@@ -198,11 +195,10 @@ where
 			gl_context, 
 			textures,
 			rendering::ColorFormat::RGB,
-		).expect("(X) register_texture() render_texture() error."));
+		).expect("(X) fractals::divergence::texture::Divergent::register_texture() render_texture error."));
 		
-		let root_count: usize = root_finder.get_roots().len();
 		eprintln!(
-			"(?) Root: t={} zoom={} pos=({}; {}) roots={}", 
+			"(?) Root: t={} zoom={} pos=({}; {})", 
 			match self.generation_time {
 				Option::None => "()",
 				Option::Some(elapsed) => &format!("{:?}", elapsed),
@@ -210,12 +206,8 @@ where
 			self.zoom,
 			self.position[0],
 			self.position[1],
-			root_count,
 		);
 
-		if root_count > 23 {
-			eprintln!("(!) Root: `root_count` high.")
-		}
 
 		Ok(())
 	}

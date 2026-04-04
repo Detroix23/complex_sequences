@@ -50,7 +50,7 @@ impl DebugTexture {
 		let mut pixels: Vec<u8> = Vec::new();
 		// HSV gradient.
 		for degree in 0..360 {
-			let rgb: color::Rgb = color::Hsv::new(degree as f64, 1.0, 1.0)
+			let rgb: color::Rgb = color::Hsv::new(degree as f32, 1.0, 1.0)
 				.to_rgb();
 			// eprintln!("(?) RGB: {:?}", rgb);
 			pixels.push(rgb.red);
@@ -92,7 +92,7 @@ impl DebugTexture {
 
 /// Draw the UI of the `DebugTexture`.
 pub fn draw(
-	settings: rc::Rc<cell::RefCell<settings::Settings>>, 
+	settings: &mut settings::Settings, 
 	ui: &imgui::Ui,
 	debug_texture: rc::Rc<cell::RefCell<DebugTexture>>,
 ) -> () {

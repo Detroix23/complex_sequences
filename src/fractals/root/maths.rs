@@ -3,11 +3,16 @@
 //! 
 //! Try to find roots of a complex function.
 
+<<<<<<< HEAD
+use std::{convert, fmt};
+=======
 use std::{
-	convert, fmt, io::Cursor
+	fmt,
+	convert,
 };
+>>>>>>> parent of 7dc08bc (Root fractal: first version working.)
 
-use complex_rust::{self as complex, Shared};
+use complex_rust as complex;
 
 use crate::fractals::textures;
 
@@ -62,144 +67,82 @@ impl convert::AsRef<str> for RootMethod {
 	}
 }
 
-/// # `RootFinder`.
-/// Build and store the roots of a polynomial.  
-pub struct RootFinder<F, D> 
+/// # Newton's method.
+/// Try to find a root of `function`:
+/// - starting from `z0` complex,
+/// - holomorphic dynamics with the sequence:
+/// ```math
+/// u(0) = z0
+/// u(n + 1) = u(n) - T(u(n))
+/// 
+/// T(z) = f(z) / f'(z) 
+/// ```
+/// cf. Desmos: https://www.desmos.com/calculator/dhirelyn0y
+fn newton_method<F, D>(
+	z0: complex::Algebraic,
+	function: F,
+	derivative: D,
+	iterations: usize,
+) -> IsRoot
 where
 	F: Fn(complex::Algebraic) -> complex::Algebraic,
 	D: Fn(complex::Algebraic) -> complex::Algebraic,
 {
-	/// Function (mostly polynomial) we search the root.
+	let mut z: complex::Algebraic = z0;
+	let mut count: usize = 0;
+
+	while count < iterations {
+		z = z - function(z) / derivative(z);
+		count += 1;
+	} 
+
+	if function(z) == complex::Algebraic::default() {
+		IsRoot::Yes{ root: z, iterations: count }
+	} else {
+		IsRoot::No
+	}
+}
+
+/// # Path of each in point of screen.
+/// Compute the limit for each point in `size` [width, height].
+/// 
+/// It is Newton's like, which is:
+/// - z0 is pixel.x + i*pixel.y,
+/// - returns a `Vec<IsRoot>`, coordinates of the root reached.
+pub fn limit_on_screen_root<F, D>(
 	function: F,
-	/// Derivate of the `function` we search the root.
 	derivative: D,
-	threshold: complex::Real,
 	iterations: usize,
 	size: [usize; 2],
 	position: [complex::Real; 2],
 	zoom: complex::Real,
-	roots: Vec<complex::Algebraic>,
-
-}
-
-impl<F, D> RootFinder<F, D>
+) -> Vec<Vec<IsRoot>>
 where
 	F: Fn(complex::Algebraic) -> complex::Algebraic,
 	D: Fn(complex::Algebraic) -> complex::Algebraic,
 {
-	pub fn new(
-		function: F,
-		derivative: D,
-		threshold: complex::Real,
-		iterations: usize,
-		size: [usize; 2],
-		position: [complex::Real; 2],
-		zoom: complex::Real,
-	) -> RootFinder<F, D> {
-		RootFinder { 
-			function,
-			derivative,
-			threshold, 
-			iterations,
-			size,
-			position,
-			zoom,
-			roots: Vec::new(), 
-		}
-	}
+	let mut grid: Vec<Vec<IsRoot>> = Vec::with_capacity(size[0] * size[1]);
 
-	pub fn get_roots(self: &Self) -> Vec<complex::Algebraic> {
-		self.roots.clone()
-	}
-
-	pub fn get_threshold(self: &Self) -> complex::Real {
-		self.threshold
-	}
-
-	/// Add a root to `roots` if the given `root` doesn't already exist.
-	/// 
-	/// Return the root reference.
-	pub fn append_root(self: &mut Self, root: complex::Algebraic) -> complex::Algebraic {
-		let mut reference: complex_rust::Algebraic = root;
-
-		for known in &self.roots {
-			if known.distance_to_squared(root) < self.threshold * self.threshold {
-				reference = *known;
-				break;
-			}
+	for y in 0..size[1] {
+		let mut line: Vec<IsRoot> = Vec::with_capacity(size[0]); 
+		
+		for x in 0..size[0] {
+			let complex_position = textures::position_from_pixel(
+				[x as f32, y as f32], 
+				[size[0] as f32, size[1] as f32], 
+				zoom, 
+				position
+			);
+			line.push(newton_method(
+				complex::Algebraic::new(complex_position[0], complex_position[1]),
+				&function, 
+				&derivative, 
+				iterations
+			));
 		}
 
-		if reference == root {
-			self.roots.push(reference);
-		}
-
-		reference
+		grid.push(line);
 	}
 
-	/// # Newton's method.
-	/// Try to find a root of `function`:
-	/// - starting from `z0` complex,
-	/// - holomorphic dynamics with the sequence:
-	/// ```math
-	/// u(0) = z0
-	/// u(n + 1) = u(n) - T(u(n))
-	/// 
-	/// T(z) = f(z) / f'(z) 
-	/// ```
-	/// cf. Desmos: https://www.desmos.com/calculator/dhirelyn0y
-	fn newton_method(self: &mut Self, z0: complex::Algebraic) -> IsRoot {
-		let mut z: complex::Algebraic = z0;
-		let mut count: usize = 0;
-		let mut current_fz: complex_rust::Algebraic = (self.function)(z);
-		let mut current_dz: complex_rust::Algebraic;
-
-		while count < self.iterations 
-			&& current_fz.absolute_squared() > self.threshold * self.threshold 	
-		{
-			current_fz = (self.function)(z);
-			current_dz = (self.derivative)(z);
-			z = z - current_fz / current_dz;
-			count += 1;
-		} 
-
-		current_fz = (self.function)(z);
-
-		if current_fz.absolute_squared() <= self.threshold * self.threshold {
-			let reference: complex_rust::Algebraic = self.append_root(z);
-			IsRoot::Yes{ root: reference, iterations: count }
-		} else {
-			IsRoot::No
-		}
-	}
-
-	/// # Path of each in point of screen.
-	/// Compute the limit for each point in `size` [width, height].
-	/// 
-	/// It is Newton's like, which is:
-	/// - z0 is pixel.x + i*pixel.y,
-	/// - returns a `Vec<IsRoot>`, coordinates of the root reached.
-	pub fn limit_on_screen(self: &mut Self) -> Vec<Vec<IsRoot>> {
-		let mut grid: Vec<Vec<IsRoot>> = Vec::with_capacity(self.size[0] * self.size[1]);
-
-		for y in 0..self.size[1] {
-			let mut line: Vec<IsRoot> = Vec::with_capacity(self.size[0]); 
-			
-			for x in 0..self.size[0] {
-				let complex_position: [f32; 2] = textures::position_from_pixel(
-					[x as f32, y as f32], 
-					[self.size[0] as f32, self.size[1] as f32], 
-					self.zoom, 
-					self.position
-				);
-				line.push(self.newton_method(complex::Algebraic::new(
-					complex_position[0], 
-					complex_position[1]
-				)));
-			}
-
-			grid.push(line);
-		}
-
-		grid
-	}
+	grid
 }

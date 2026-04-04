@@ -17,22 +17,22 @@ impl Rgb {
 
 /// # HSV.
 /// 3 components color:
-/// - `hue`: f64 in [0; 360[,
-/// - `saturation`: f64 in [0; 1],
-/// - `brightness` (or "value"): f64 in [0; 1],
+/// - `hue`: f32 in [0; 360[,
+/// - `saturation`: f32 in [0; 1],
+/// - `brightness` (or "value"): f32 in [0; 1],
 #[derive(Debug, Clone, Copy)]
 pub struct Hsv {
-	pub hue: f64,
-	pub saturation: f64,
-	pub brightness: f64,
+	pub hue: f32,
+	pub saturation: f32,
+	pub brightness: f32,
 }
 
 impl Hsv {
 	/// Instantiate a new `Hsv` color. It has constraints, or panics:
-	/// - `hue`: f64 in [0; 360[,
-	/// - `saturation`: f64 in [0; 1],
-	/// - `brightness`: f64 in [0; 1].
-	pub fn new(hue: f64, saturation: f64, brightness: f64) -> Hsv {
+	/// - `hue`: f32 in [0; 360[,
+	/// - `saturation`: f32 in [0; 1],
+	/// - `brightness`: f32 in [0; 1].
+	pub fn new(hue: f32, saturation: f32, brightness: f32) -> Hsv {
 		if hue >= 360.0 || 0 > 0 {
 			panic!("(X) gui::Hsv::new() `hue` ({}) must be in [0; 360[", hue);
 		} if saturation > 1.0 || 0.0 > saturation {
@@ -52,7 +52,7 @@ impl Hsv {
 	/// 
 	/// Formula from: [rapidtables](https://www.rapidtables.com/convert/color/hsv-to-rgb.html)
 	pub fn to_rgb(self: &Self) -> Rgb {
-		let c: f64 = self.brightness * self.saturation;
+		let c: f32 = self.brightness * self.saturation;
 		let x = c * (1.0 - ((self.hue / 60.0) % 2.0 - 1.0).abs());
 		let m = self.brightness - c;
 
@@ -83,7 +83,7 @@ impl Hsv {
 #[test]
 fn test_hsv_to_rgb() -> () {
 	for d in 0..360 {
-		let hsv = Hsv::new(d as f64, 1.0, 1.0);
+		let hsv = Hsv::new(d as f32, 1.0, 1.0);
 		let rgb = hsv.to_rgb();
 		println!(
 			"- hsv=({}; {}; {}), rgb=({}; {}; {})", 

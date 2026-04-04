@@ -100,7 +100,7 @@ pub fn convert_state_table_to_data(
 		for state in line {
 			match state {
 				fractals::divergence::State::Divergent{ iterations } => {
-					let weight: f64 = iterations as f64 / iterations_max as f64;
+					let weight: f32 = iterations as f32 / iterations_max as f32;
 
 					match color_mode {
 						ColorMode::HSV => {
@@ -111,9 +111,9 @@ pub fn convert_state_table_to_data(
 						},
 						_ => {
 							let color: color::Rgb = color::Rgb::new(
-								(divergent.red as f64 * weight) as u8,
-								(divergent.green as f64 * weight) as u8,
-								(divergent.blue as f64 * weight) as u8,
+								(divergent.red as f32 * weight) as u8,
+								(divergent.green as f32 * weight) as u8,
+								(divergent.blue as f32 * weight) as u8,
 							);
 							data.push(color.red);
 							data.push(color.green);
@@ -141,17 +141,34 @@ pub fn convert_state_table_to_data(
 	}
 }
 
+/// Extract, from a `table`, all the unique found roots.
+fn extract_unique_roots(
+	table: &Vec<Vec<fractals::root::IsRoot>>,
+) -> Vec<complex::Algebraic> {
+	let mut found: Vec<complex::Algebraic> = Vec::new();
+
+	for line in table {
+		for potential in line {
+			if let fractals::root::IsRoot::Yes { root, .. } = potential {
+				if !found.contains(root) {
+					found.push(*root);
+				}
+			}
+		}
+	}
+
+	found
+}
+
 /// Convert a 2D `table`: `Vec<Vec<Root>>` into `Vec<u8>` of raw `data`. 
 pub fn convert_root_table_to_data(
 	table: Vec<Vec<fractals::root::IsRoot>>,
-	roots: Vec<complex::Algebraic>,
-	threshold: complex::Real,
 	no_root_color: color::Rgb,
 	iterations_max: usize,
 ) -> Data {
 	let mut data: Vec<u8> = Vec::new();
 	let mut iterations_total: usize = 0;
-	let mut loss_counter: usize = 0;
+	let roots: Vec<complex_rust::Algebraic> = extract_unique_roots(&table);
 
 	for line in table {
 		for root in line {
@@ -167,20 +184,16 @@ pub fn convert_root_table_to_data(
 					root, 
 					iterations, 
 				} => {
-					let root_id: usize = match roots
+					let root_id = roots
 						.iter()
-						.position(|stored_root| {
-							stored_root.distance_to_squared(root) <= threshold * threshold
-						}) {
-							Option::Some(index) => index,
-							Option::None => {
-								loss_counter += 1;
-								0
-							},
-						};
+						.position(|stored_root| *stored_root == root)
+						.expect(&format!(
+							"(X) fractals::textures::convert_root_table_to_data() `root` ({}) has no counter part",
+							root,
+						));
 
 					let color = color::Hsv::new(
-						root_id as f64 / roots.len() as f64 * 360.0, 
+						root_id as f32 / roots.len() as f32 * 360.0, 
 						1.0, 
 						1.0
 					).to_rgb();
@@ -193,10 +206,6 @@ pub fn convert_root_table_to_data(
 				},
 			}
 		}
-	}
-
-	if loss_counter > 0 {
-		eprintln!("(!) convert_root_table_to_data() `loss_counter` = {} `roots`: {:?}", loss_counter, roots);
 	}
 
 	Data {
