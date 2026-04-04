@@ -1,0 +1,82 @@
+//! # Complex sequences.
+//! src/fractals/divergence/app.rs
+//! 
+//! App related functions.
+
+use std::{
+	rc,
+	cell,
+};
+
+use glium::{
+	self,
+	backend::Facade,
+};
+use imgui;
+use complex_rust as complex;
+
+use crate::fractals::{
+	self,
+	textures::Fractal,
+};
+use crate::gui::settings;
+
+/// Draw settings and texture of `Divergence`.
+pub fn draw<F>(
+	settings_state: rc::Rc<cell::RefCell<settings::Settings>>,
+	ui: &imgui::Ui,
+	// Rc<RefCell<Divergent<impl Fn(Algebraic, Algebraic) -> Algebraic>>>
+	divergent_texture: rc::Rc<cell::RefCell<fractals::divergence::Divergent<F>>>,
+	renderer: &mut imgui_glium_renderer::Renderer, 
+	display: &glium::Display<glium::glutin::surface::WindowSurface>,
+) -> () 
+where 
+	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Copy + 'static,
+{
+	// ## Divergence.
+	
+	// Fractal graphics.
+	divergent_texture
+		.borrow_mut()
+		.show_textures(ui, [410.0, 0.0]);
+	
+	// Settings window.
+	settings::show_settings_divergent(
+		[400.0, 600.0], 
+		[0.0, 0.0], 
+		settings_state.clone(),
+		ui, 
+		divergent_texture.clone(), 
+		renderer, 
+		display,
+	);
+}
+
+/// Update settings and texture of `Divergence`.
+pub fn update<F>(
+	divergent_texture: rc::Rc<cell::RefCell<fractals::divergence::Divergent<F>>>,
+	settings_state: rc::Rc<cell::RefCell<settings::Settings>>,
+	_ui: &imgui::Ui,
+	renderer: &mut imgui_glium_renderer::Renderer, 
+	display: &glium::Display<glium::glutin::surface::WindowSurface>,
+	window_size: [u32; 2],
+) -> () 
+where
+	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Copy + 'static,
+{
+	divergent_texture
+		.borrow_mut()
+		.update_size(window_size);
+
+	// If a setting change, draw the fractal anew.
+	if divergent_texture.borrow_mut().is_state_updated() {
+		divergent_texture
+			.borrow_mut()
+			.register_texture(
+				display.get_context(), 
+				renderer.textures(), 
+				settings_state.borrow().color_mode,
+			)
+			.expect("(!) gui::default::launch_default() Divergent: update: can't register texture.");
+	}
+}
