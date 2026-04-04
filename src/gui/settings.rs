@@ -48,10 +48,10 @@ impl Default for Settings {
 /// A `combo` selector for the general fractal family.
 /// 
 /// Item shared in all family. 
-fn family_selector(ui: &imgui::Ui, settings: &mut Settings) -> () {
+fn family_selector(ui: &imgui::Ui, settings: rc::Rc<cell::RefCell<Settings>>) -> () {
 	ui.combo(
 		"Method", 
-		&mut settings.method_id, 
+		&mut settings.borrow_mut().method_id, 
 		&fractals::Method::list(), 
 		| method: &fractals::Method | borrow::Cow::Borrowed(method.as_ref()),
 	);
@@ -108,13 +108,8 @@ where
 
 			ui.text_wrapped("## Controls");	
 
-			// General fractal family.
-			ui.combo(
-				"Method", 
-				&mut settings.borrow_mut().method_id, 
-				&fractals::Method::list(), 
-				| method: &fractals::Method | borrow::Cow::Borrowed(method.as_ref()),
-			);
+			family_selector(ui, settings.clone());
+
 			// Limit type.
 			ui.combo(
 				"Limit type",
@@ -137,8 +132,10 @@ where
 
 			// Zoom slider.
 			ui.slider_config("Zoom", 1.0, 100000.0)
-				.flags(imgui::SliderFlags::LOGARITHMIC)
-				.build(&mut divergent_texture.borrow_mut().zoom);
+				.flags(
+					imgui::SliderFlags::LOGARITHMIC
+					| imgui::SliderFlags::NO_ROUND_TO_FORMAT
+				).build(&mut divergent_texture.borrow_mut().zoom);
 
 			// (x; y).
 			ui.text("Position");
@@ -163,6 +160,7 @@ where
 
 			// Threshold for divergence.
 			ui.slider_config("Threshold", 0.0, 5.0)
+				.flags(imgui::SliderFlags::NO_ROUND_TO_FORMAT)
 				.build(&mut divergent_texture.borrow_mut().threshold);
 
 			// Fixed constant point.
@@ -182,7 +180,7 @@ where
 pub fn show_settings_root<F, D>(
 	size: [complex::Real; 2],
 	position: [complex::Real; 2],
-	settings: &mut Settings,
+	settings: rc::Rc<cell::RefCell<Settings>>,
 	ui: &imgui::Ui,
 	root_texture: rc::Rc<cell::RefCell<fractals::root::Root<F, D>>>,
 	renderer: &mut imgui_glium_renderer::Renderer, 
@@ -210,7 +208,7 @@ where
 
 			ui.text_wrapped("## Controls");	
 			
-			family_selector(ui, settings);
+			family_selector(ui, settings.clone());
 
 			// Limit type.
 			ui.combo(
@@ -227,15 +225,17 @@ where
 					.register_texture(
 						display.get_context(), 
 						renderer.textures(), 
-						settings.color_mode,
+						settings.borrow().color_mode,
 					)
 					.expect("(!) gui::default::launch_default() run_ui: can't register texture.");
 			}
 
 			// Zoom slider.
 			ui.slider_config("Zoom", 1.0, 100000.0)
-				.flags(imgui::SliderFlags::LOGARITHMIC)
-				.build(&mut root_texture.borrow_mut().zoom);
+				.flags(
+					imgui::SliderFlags::LOGARITHMIC
+					| imgui::SliderFlags::NO_ROUND_TO_FORMAT
+				).build(&mut root_texture.borrow_mut().zoom);
 
 			// (x; y).
 			ui.text("Position");
@@ -259,7 +259,8 @@ where
 				.build(&mut root_texture.borrow_mut().iterations);
 
 			// Threshold for root acceptation.
-			ui.slider_config("Threshold", 0.0, 5.0)
+			ui.slider_config("Threshold", 0.00000001, 2.0)
+				.flags(imgui::SliderFlags::NO_ROUND_TO_FORMAT)
 				.build(&mut root_texture.borrow_mut().threshold);
 			
 		});
@@ -269,7 +270,7 @@ where
 pub fn show_settings_debug(
 	size: [complex::Real; 2],
 	position: [complex::Real; 2],
-	settings: &mut Settings,
+	settings: rc::Rc<cell::RefCell<Settings>>,
 	ui: &imgui::Ui,
 ) -> () {
 	// Window: settings.
@@ -283,6 +284,6 @@ pub fn show_settings_debug(
 
 			ui.text_wrapped("## Controls");	
 			
-			family_selector(ui, settings);
+			family_selector(ui, settings.clone());
 		});
 }

@@ -58,7 +58,7 @@ where
 	settings::show_settings_root(
 		[400.0, 600.0], 
 		[0.0, 0.0], 
-		&mut settings_state.borrow_mut(), 
+		settings_state.clone(), 
 		ui, 
 		root_texture.clone(), 
 		renderer, 

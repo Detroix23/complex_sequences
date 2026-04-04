@@ -148,29 +148,31 @@ where
         &mut self,
         gl_context: &Facade,
         textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
-		color_mode: fractals::textures::ColorMode,
+		_color_mode: fractals::textures::ColorMode,
     ) -> Result<(), Box<dyn error::Error>>
     where
         Facade: backend::Facade,
     {	
 		let scaled_size: [usize; 2] = [
 			(self.size[0] as f32 / self.scale) as usize, 
-			(self.size[1] as f32 / self.scale) as usize
+			(self.size[1] as f32 / self.scale) as usize,
 		];
+		let mut root_finder: fractals::root::maths::RootFinder<&F, &D> = fractals::root::maths::RootFinder::new(
+			&self.function, 
+			&self.derivative, 
+			self.threshold,
+			self.iterations, 
+			scaled_size, 
+			self.position, 
+			self.zoom,
+		);
 			
 		// Texture generation.
 		let generation_start: time::Instant = time::Instant::now();
 
 		let table: Vec<Vec<fractals::root::IsRoot>> = match self.method_id {
 			0 => {
-				fractals::root::maths::limit_on_screen_root(
-					&self.function, 
-					&self.derivative, 
-					self.iterations, 
-					scaled_size, 
-					self.position, 
-					self.zoom
-				)
+				root_finder.limit_on_screen()
 			},
 			_ => panic!(
 				"(X) fractals::divergence::texture::Divergent::register_texture() `method_id` unknown ({}).", 
@@ -180,6 +182,8 @@ where
 
 		let data: fractals::textures::Data = fractals::textures::convert_root_table_to_data(
 			table, 
+			root_finder.get_roots(),
+			root_finder.get_threshold(),
 			self.color_no_root,
 			self.iterations,
 		);
@@ -194,10 +198,11 @@ where
 			gl_context, 
 			textures,
 			rendering::ColorFormat::RGB,
-		).expect("(X) fractals::divergence::texture::Divergent::register_texture() render_texture error."));
+		).expect("(X) register_texture() render_texture() error."));
 		
+		let root_count: usize = root_finder.get_roots().len();
 		eprintln!(
-			"(?) Root: t={} zoom={} pos=({}; {})", 
+			"(?) Root: t={} zoom={} pos=({}; {}) roots={}", 
 			match self.generation_time {
 				Option::None => "()",
 				Option::Some(elapsed) => &format!("{:?}", elapsed),
@@ -205,8 +210,12 @@ where
 			self.zoom,
 			self.position[0],
 			self.position[1],
+			root_count,
 		);
 
+		if root_count > 23 {
+			eprintln!("(!) Root: `root_count` high.")
+		}
 
 		Ok(())
 	}

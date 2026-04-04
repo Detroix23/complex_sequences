@@ -92,7 +92,7 @@ impl DebugTexture {
 
 /// Draw the UI of the `DebugTexture`.
 pub fn draw(
-	settings: &mut settings::Settings, 
+	settings: rc::Rc<cell::RefCell<settings::Settings>>, 
 	ui: &imgui::Ui,
 	debug_texture: rc::Rc<cell::RefCell<DebugTexture>>,
 ) -> () {

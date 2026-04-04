@@ -10,5 +10,6 @@ pub mod app;
 pub use maths::{
 	IsRoot,
 	RootMethod,
+	RootFinder,
 };
 pub use texture::Root;
