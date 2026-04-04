@@ -144,7 +144,7 @@ where
         &mut self,
         gl_context: &Facade,
         textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
-		_color_mode: fractals::textures::ColorMode,
+		color_mode: fractals::textures::ColorMode,
     ) -> Result<(), Box<dyn error::Error>>
     where
         Facade: backend::Facade,
@@ -182,6 +182,7 @@ where
 			root_finder.get_threshold(),
 			self.color_no_root,
 			self.iterations,
+			color_mode,
 		);
 
 		self.iterations_total = data.iterations_total;

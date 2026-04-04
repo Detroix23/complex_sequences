@@ -42,10 +42,10 @@ pub fn launch_default() -> () {
 	);
 	// Necessary for the closure.
 	let divergent_texture_update = divergent_texture.clone();
-
+	
 	let root_texture = fractals::root::Root::new(
-		|z: complex_rust::Algebraic| z * z * z * z * z + complex::Algebraic::new(1.0, 0.0),
-		|z: complex_rust::Algebraic| complex::Algebraic::new(4.0, 0.0) * z * z * z * z,
+		|z: complex_rust::Algebraic| z * z * z + complex::Algebraic::new(1.0, 0.0),
+		|z: complex_rust::Algebraic| complex::Algebraic::new(3.0, 0.0) * z * z,
 		[400.0, 100.0],
 		[0.0, 0.0],
 		1.0,

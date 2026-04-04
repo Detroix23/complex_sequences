@@ -1,7 +1,29 @@
 //! # Complex sequences.
 //! src/gui/color.rs
 
-/// # RGB.
+/// # Float `Grayscale`.
+/// Value:
+/// - `0.0` is pitch black;
+/// - `1.0` is full white.
+pub struct Grayscale {
+	pub value: f64
+}
+
+impl Grayscale {
+	pub fn new(value: f64) -> Grayscale {
+		Grayscale { value }
+	}
+
+	pub fn to_rgb(self: &Self) -> Rgb {
+		Rgb::new(
+			(255 as f64 * self.value) as u8,
+			(255 as f64 * self.value) as u8,
+			(255 as f64 * self.value) as u8,
+		)
+	}
+}
+
+/// # `Rgb`: red, green, blue.
 #[derive(Debug, Clone, Copy)]
 pub struct Rgb {
 	pub red: u8,
@@ -15,8 +37,7 @@ impl Rgb {
 	}
 }
 
-/// # HSV.
-/// 3 components color:
+/// # `Hsv`. 3 components color.
 /// - `hue`: f64 in [0; 360[,
 /// - `saturation`: f64 in [0; 1],
 /// - `brightness` (or "value"): f64 in [0; 1],

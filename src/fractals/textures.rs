@@ -104,12 +104,16 @@ pub fn convert_state_table_to_data(
 
 					match color_mode {
 						ColorMode::HSV => {
-							let color: color::Rgb = color::Hsv::new(weight * 359.9, 1.0, 1.0).to_rgb();
+							let color: color::Rgb = color::Hsv::new(
+								weight * 359.9, 
+								1.0 - weight, 
+								1.0 - weight,
+							).to_rgb();
 							data.push(color.red);
 							data.push(color.green);
 							data.push(color.blue);
 						},
-						_ => {
+						ColorMode::GRAYSCALE => {
 							let color: color::Rgb = color::Rgb::new(
 								(divergent.red as f64 * weight) as u8,
 								(divergent.green as f64 * weight) as u8,
@@ -119,7 +123,6 @@ pub fn convert_state_table_to_data(
 							data.push(color.green);
 							data.push(color.blue);
 						}
-
 					}
 
 					iterations_total += iterations;
@@ -148,6 +151,7 @@ pub fn convert_root_table_to_data(
 	threshold: complex::Real,
 	no_root_color: color::Rgb,
 	iterations_max: usize,
+	color_mode: ColorMode,
 ) -> Data {
 	let mut data: Vec<u8> = Vec::new();
 	let mut iterations_total: usize = 0;
@@ -178,12 +182,21 @@ pub fn convert_root_table_to_data(
 								0
 							},
 						};
-
-					let color = color::Hsv::new(
-						root_id as f64 / roots.len() as f64 * 360.0, 
-						1.0, 
-						1.0
-					).to_rgb();
+					
+					let weight: f64 = iterations as f64 / iterations_max as f64;
+					let root_slider: f64 = root_id as f64 / roots.len() as f64;
+					let color: color::Rgb = match color_mode {
+						ColorMode::HSV => {
+							color::Hsv::new(
+								 root_slider * 360.0, 
+								1.0 - weight, 
+								1.0 - weight,
+							).to_rgb()
+						},
+						ColorMode::GRAYSCALE => {
+							color::Grayscale::new(root_slider).to_rgb()
+						}
+					};
 
 					data.push(color.red);
 					data.push(color.green);

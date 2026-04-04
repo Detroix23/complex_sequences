@@ -109,7 +109,6 @@ where
 			ui.text_wrapped("## Controls");	
 
 			family_selector(ui, settings.clone());
-
 			// Limit type.
 			ui.combo(
 				"Limit type",
@@ -213,7 +212,6 @@ where
 			ui.text_wrapped("## Controls");	
 			
 			family_selector(ui, settings.clone());
-
 			// Limit type.
 			ui.combo(
 				"Limit type",
@@ -221,8 +219,8 @@ where
 				&fractals::root::RootMethod::list(),
 				| limit: &fractals::root::RootMethod | borrow::Cow::Borrowed(limit.as_ref()),
 			);
-
-
+			color_mode_selector(ui, settings.clone());
+			
 			// Force update.
 			if ui.button("Force update.") {
 				root_texture.borrow_mut()
