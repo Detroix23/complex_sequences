@@ -9,6 +9,7 @@ mod fractals;
 fn main() {
     println!("# Complex sequences.");
 
+    // We use closure preset. 
     gui::defaults::launch_default();
 
     eprintln!("(?) main::main() End !");

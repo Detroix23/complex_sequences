@@ -28,7 +28,7 @@ const WINDOW_SIZE: [u32; 2] = [1024, 768];
 pub fn launch_default() -> () {
 	// Workers.
 	let divergent_texture = fractals::divergence::Divergent::new(
-		|z: complex_rust::Algebraic, c: complex_rust::Algebraic| z * z + c ,
+		support::defaults::polynomial2_c,
 		complex::Algebraic::new(0.0, 0.0),
 		[400.0, 100.0], 
 		[0.0, 0.0],
