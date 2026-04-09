@@ -88,7 +88,7 @@ pub fn show_settings_divergent<F>(
 	display: &glium::Display<glium::glutin::surface::WindowSurface>,
 ) -> () 
 where
-	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Copy + 'static,
+	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Copy + Send + 'static,
 {
 	// Window: settings.
 	ui.window("Settings.")
@@ -120,7 +120,8 @@ where
 
 			// Force update.
 			if ui.button("Force update.") {
-				divergent_texture.borrow_mut()
+				divergent_texture
+					.borrow_mut()
 					.register_texture(
 						display.get_context(), 
 						renderer.textures(), 

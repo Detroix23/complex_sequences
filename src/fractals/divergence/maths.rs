@@ -3,16 +3,17 @@
 //! 
 //! Compute limits of sequences, and determine if they are divergent.  
 
-use std::{fmt, convert};
+use std::{fmt, convert, thread};
+use std::sync::mpsc;
 
 use complex_rust as complex;
 use complex::Shared;
 
-use crate::fractals::textures;
+use crate::fractals::{threading, textures};
 
 /// # Divergence `State`.
 /// Tell if a function explode toward infinity or remains bounded.
-#[derive(Debug, 	Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub enum State {
 	/// Divergent: in how many `iterations` does it diverged. 
 	Divergent{ iterations: usize },
@@ -107,6 +108,10 @@ where
 	}
 }
 
+// =========================
+// MANDELBROT SET.
+// =========================
+
 /// # Limit for each in point of screen.
 /// Compute the limit for each point in `size` [width, height].
 /// 
@@ -124,6 +129,7 @@ pub fn limit_on_screen_mandelbrot<F>(
 	size: [usize; 2],
 	position: [complex::Real; 2],
 	zoom: complex::Real,
+	thread_count: usize,
 ) -> Vec<Vec<State>>
 where
 	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic,
@@ -154,6 +160,11 @@ where
 	grid
 }
 
+
+// =========================
+// JULIA SET.
+// =========================
+
 /// # Limit for each in point of screen.
 /// Compute the limit for each point in `size` [width, height].
 /// 
@@ -171,35 +182,71 @@ pub fn limit_on_screen_julia<F>(
 	size: [usize; 2],
 	position: [complex::Real; 2],
 	zoom: complex::Real,
+	thread_count: usize,
 ) -> Vec<Vec<State>>
 where
-	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic,
+	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Clone + Send + 'static,
 {
+	let mut threads: Vec<thread::JoinHandle<()>> = Vec::with_capacity(thread_count);
+	let (sender, receiver) = mpsc::channel();
+
 	let mut grid: Vec<Vec<State>> = Vec::with_capacity(size[1]);
 	let screen_size: [f32; 2] = [size[0] as f32, size[1] as f32];
-	let mut sub_grids: [Vec<Vec<State>>; 4] = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
+	
+	let mut sub_grids: Vec<Vec<Vec<State>>> = Vec::with_capacity(thread_count);
+	for _ in 0..thread_count {
+		sub_grids.push(Vec::new());
+	}
 
-	// Testing division with 4 fake threads.
-	const THREAD_COUNT: usize = 4;
+	// Spawn threads.
+	for thread_id in 0..thread_count {
+		let sender_local = sender.clone();
+		let f_local: F = f.clone();
 
-	for thread_id in 0..THREAD_COUNT {
-		let start: [usize; 2] = [0, size[1] * thread_id / THREAD_COUNT];
-		let end: [usize; 2] = [size[0], size[1] * (thread_id + 1) / THREAD_COUNT];
+		let handler: thread::JoinHandle<()> = thread::spawn(move || {
+			let id: usize = thread_id;
+			let start: [usize; 2] = [0, size[1] * thread_id / thread_count];
+			let end: [usize; 2] = [size[0], size[1] * (thread_id + 1) / thread_count];
+			
+			let sub_grid: Vec<Vec<State>> = limit_on_screen_julia_part(
+				c, 
+				f_local, 
+				threshold, 
+				iterations, 
+				screen_size, 
+				start, 
+				end, 
+				position, 
+				zoom
+			);
 
-		sub_grids[thread_id] = limit_on_screen_julia_part(
-			c, 
-			&f, 
-			threshold, 
-			iterations, 
-			screen_size, 
-			start, 
-			end, 
-			position, 
-			zoom
-		);
+			let result = threading::GenerationPart::new(
+				id,
+				(start, end),
+				sub_grid,
+			);
+			sender_local
+				.send(result)
+				.expect(&format!("(X) divergence::maths::limit_on_screen_julia() Couldn't send payload."));
+		});
+
+		threads.push(handler);
 	}	
 
-	for thread_id in 0..THREAD_COUNT {
+	// Collect results.
+	for iteration in 0..thread_count {
+		let result = receiver
+			.recv()
+			.expect(&format!(
+				"(X) divergence::maths::limit_on_screen_julia() Couldn't receive payload for iteration={}.", 
+				iteration
+			));
+		
+		sub_grids[result.thread_id] = result.data;
+	}
+
+	// Aggregate results.
+	for thread_id in 0..thread_count {
 		let sub_grid: &Vec<Vec<State>> = &sub_grids[thread_id];
 
 		for y in 0..sub_grid.len() {
@@ -225,7 +272,7 @@ fn limit_on_screen_julia_part<F>(
 	zoom: complex::Real,
 ) -> Vec<Vec<State>>
 where
-	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic,
+	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Send + 'static,
 {
 	let size: [usize; 2] = [end[0] - start[0], end[1] - start[1]];
 	let mut grid: Vec<Vec<State>> = Vec::with_capacity(size[1]);

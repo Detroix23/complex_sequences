@@ -31,7 +31,7 @@ pub fn draw<F>(
 	display: &glium::Display<glium::glutin::surface::WindowSurface>,
 ) -> () 
 where 
-	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Copy + 'static,
+	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Copy + Send + 'static,
 {
 	// ## Divergence.
 	
@@ -62,7 +62,7 @@ pub fn update<F>(
 	window_size: [u32; 2],
 ) -> () 
 where
-	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Copy + 'static,
+	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Copy + Send + 'static,
 {
 	divergent_texture
 		.borrow_mut()

@@ -26,6 +26,7 @@ where
 	
 	iterations_total: usize,
 	generation_time: Option<time::Duration>,
+	thread_count: usize,
 
 	// Parameters.
 	/// Constant fixed point. E.g: `c` in `f(z) = z * z + c`.
@@ -77,6 +78,7 @@ where
 			function,
 			iterations_total: 0usize,
 			texture_id: Option::None,
+			thread_count: 0,
 			constant,
 			size: [0, 0], 
 			information_size,
@@ -131,7 +133,7 @@ where
 
 impl<F> fractals::textures::Fractal for Divergent<F> 
 where
-	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Clone,
+	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Clone + Send + 'static,
 {
 	fn update_size(self: &mut Self, new_size: [u32; 2]) -> () {
 		self.size = new_size
@@ -150,6 +152,7 @@ where
 			(self.size[0] as f32 / self.scale) as usize, 
 			(self.size[1] as f32 / self.scale) as usize
 		];
+		self.thread_count = fractals::threading::determine_threads().into();
 			
 		// Texture generation.
 		let generation_start: time::Instant = time::Instant::now();
@@ -163,6 +166,7 @@ where
 				scaled_size,
 				self.position,
 				self.zoom / self.scale,
+				self.thread_count,
 			),
 			1 => fractals::divergence::maths::limit_on_screen_julia(
 				self.constant, 
@@ -172,6 +176,7 @@ where
 				scaled_size,
 				self.position,
 				self.zoom / self.scale,
+				self.thread_count,
 			),
 			_ => panic!("(X) fractals::divergence_texture::Divergent::register_texture() `method_id` unknown ({}).", self.method_id),
 		};
@@ -205,7 +210,7 @@ where
 		).expect("(X) fractals::divergence::texture::Divergent::register_texture() render_texture error."));
 
 		eprintln!(
-			"\r* Divergent {}: t={} zoom={} pos=({}; {})", 
+			"\r* Divergent {}: t={} zoom={} pos=({}; {}) threads={}", 
 			self.method_id,
 			match self.generation_time {
 				Option::None => "()",
@@ -214,6 +219,7 @@ where
 			self.zoom,
 			self.position[0],
 			self.position[1],
+			self.thread_count,
 		);
 
 		Ok(())
@@ -241,13 +247,15 @@ where
 Pixels = {:.0}; 
 Iterations = {};
 Time = {}ms;
-Speed = {} iterations/ ms;", 
+Speed = {} iterations/ ms;
+Threads = {}", 
 						self.size[0],
 						self.size[1],
 						(self.size[0] * self.size[1]) as f32 / self.scale,
 						self.iterations_total,
 						generation_time.as_millis(),
 						self.iterations_total as u128 / generation_time.as_millis(),
+						self.thread_count,
 					));
 				} else {
 					ui.text(format!("(!) Error: no data."));

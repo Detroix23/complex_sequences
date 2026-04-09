@@ -49,7 +49,7 @@ where
 			ColorFormat::RGBA => 4_usize,
 	}) as u32;
 	
-	let clean_data = if size_expected != size_data {
+	let clean_data: Vec<u8> = if size_expected != size_data {
 		eprintln!("
 (!) support::rendering::render_texture() Expected size and `data` size mismatch.
 Details:
