@@ -47,8 +47,15 @@ Building it yourself. In the root of the project:
 cargo build -r
 ```
 
-## Notes on error handling.
-Data sizes mismatch. If this occurs:
+## Notes.
+Multithreading:
+- program will determine by itself the threads it should use with:
+```rust
+std::thread::available_parallelism();
+```
+- most of the time it will use **all of machine cores**, other apps will lag.
+
+Error on data sizes mismatch. If this occurs:
 - a message like `(X) Expected size and `data` size mismatch.` will be printed;
 - pixels might get popped out of the pixels array;
 - black pixels might be appended at the end of the pixel array;
