@@ -205,7 +205,7 @@ where
 		).expect("(X) fractals::divergence::texture::Divergent::register_texture() render_texture error."));
 
 		eprintln!(
-			"\r(?) Divergent {}: t={} zoom={} pos=({}; {})", 
+			"\r* Divergent {}: t={} zoom={} pos=({}; {})", 
 			self.method_id,
 			match self.generation_time {
 				Option::None => "()",

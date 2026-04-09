@@ -29,3 +29,26 @@ The `Settings` window.
 
 Mouse:
 - Middle click to center on cursor.
+- Scroll to zoom (exponentially).
+
+## Build and run.
+Running on Windows:
+```bash
+./complex_sequences_<your os>_v<your version>.exe
+```
+
+Running on Linux:
+```bash
+./complex_sequences_<your os>_v<your version>
+```
+
+Building it yourself. In the root of the project:
+```
+cargo build -r
+```
+
+## Notes on error handling.
+Data sizes mismatch. If this occurs:
+- a message like `(X) Expected size and `data` size mismatch.` will be printed;
+- pixels might get popped out of the pixels array;
+- black pixels might be appended at the end of the pixel array;

@@ -21,7 +21,10 @@ pub fn listen(
 	zoom: f32,
 	_scale: f32,
 ) -> rendering::ViewportSettings {
+	let scroll_strength: f32 = 1.5;
+
 	let mouse_position: [f32; 2] = ui.io().mouse_pos;
+	let mouse_scroll: f32 = ui.io().mouse_wheel;
 	let mut viewport: rendering::ViewportSettings = rendering::ViewportSettings{ position, zoom };
 
 	if ui.is_mouse_clicked(imgui::MouseButton::Middle) {
@@ -37,6 +40,9 @@ pub fn listen(
 		);
 		
 		viewport.position = selection_position;
+	} if mouse_scroll != 0.0 {
+		viewport.zoom = zoom * scroll_strength.powf(mouse_scroll);
+		println!("(?) gui::mouse::listen() Mouse scrolled: {}", mouse_scroll);
 	}
 
 	viewport
