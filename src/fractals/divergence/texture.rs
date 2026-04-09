@@ -187,13 +187,13 @@ where
 		self.iterations_total = data.iterations_total;
 		self.generation_time = Option::Some(generation_start.elapsed());
 		
-		eprintln!(
-			"\r(?) Divergent {} Rendering: zoom={} pos=({}; {})", 
-			self.method_id,
-			self.zoom,
-			self.position[0],
-			self.position[1],
-		);
+		// eprintln!(
+		// 	"\r(?) Divergent {} Rendering: zoom={} pos=({}; {})", 
+		// 	self.method_id,
+		// 	self.zoom,
+		// 	self.position[0],
+		// 	self.position[1],
+		// );
 
 		self.texture_id = Option::Some(rendering::render_texture(
 			self.texture_id, 

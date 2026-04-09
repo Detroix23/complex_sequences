@@ -183,8 +183,8 @@ where
 	const THREAD_COUNT: usize = 4;
 
 	for thread_id in 0..THREAD_COUNT {
-		let start: [usize; 2] = [0, size[1] / THREAD_COUNT * thread_id];
-		let end: [usize; 2] = [size[0], size[1] / THREAD_COUNT * (thread_id + 1)];
+		let start: [usize; 2] = [0, size[1] * thread_id / THREAD_COUNT];
+		let end: [usize; 2] = [size[0], size[1] * (thread_id + 1) / THREAD_COUNT];
 
 		sub_grids[thread_id] = limit_on_screen_julia_part(
 			c, 

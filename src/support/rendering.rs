@@ -10,6 +10,7 @@ use glium::{
 };
 use imgui_glium_renderer;
 
+#[derive(Debug)]
 pub enum ColorFormat {
 	RGB,
 	RGBA,
@@ -26,16 +27,16 @@ pub struct ViewportSettings {
 /// - to registers `gl_context`, `textures`.
 /// 
 /// Returns the new texture id. 
-pub fn render_texture<Facade>(
+pub fn render_texture<F>(
 	texture_id: Option<imgui::TextureId>,
 	data: Vec<u8>,
 	size: [usize; 2],
-	gl_context: &Facade,
+	gl_context: &F,
 	textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
 	format: ColorFormat,
 ) -> Result<imgui::TextureId, Box<dyn std::error::Error>> 
 where
-	Facade: backend::Facade,
+	F: backend::Facade,
 {
 	let width: u32 = size[0] as u32;
 	let height: u32 = size[1] as u32;	
@@ -47,22 +48,48 @@ where
 			ColorFormat::RGB => 3_usize,
 			ColorFormat::RGBA => 4_usize,
 	}) as u32;
-	if size_expected != size_data {
-		panic!("
-(X) support::rendering::render_texture() Expected size and `data` size mismatch.
+	
+	let clean_data = if size_expected != size_data {
+		eprintln!("
+(!) support::rendering::render_texture() Expected size and `data` size mismatch.
 Details:
 ```
-  width * height != size_data
-  {} * {} = {} != {}
+  Data size:
+    Color format = {:?}
+    size_data = {} / {} = {}
+  width * height != size_data:
+    {} * {} = {} != {}
+  Difference: 
+    {} - {} = {}
 ```
 ",
-			width, height, width * height, size_data
+			format, data.len(), match format {
+				ColorFormat::RGB => 3_usize,
+				ColorFormat::RGBA => 4_usize,
+			}, size_data,
+			width, height, size_expected, size_data, 
+			size_expected, size_data, size_expected - size_data
 		);
-	}
 
-	// Render (from `imgui-examples`, `custom_texture`).
-	let raw = texture::RawImage2d {
-		data: borrow::Cow::Owned(data),
+		// _In-extremis_ rescue, by adding black components or cutting data.
+		let mut saved_data: Vec<u8> = data;
+
+		while saved_data.len() > size_expected as usize {
+			saved_data.pop();
+		}
+
+		while saved_data.len() < size_expected as usize {
+			saved_data.push(u8::MAX);
+		}
+		
+		saved_data
+	} else {
+		data
+	};
+
+	// Render (from `imgui-examples/custom_texture`).
+	let raw: texture::RawImage2d<'_, u8> = texture::RawImage2d {
+		data: borrow::Cow::Owned(clean_data),
 		width,
 		height,
 		format: match format {
