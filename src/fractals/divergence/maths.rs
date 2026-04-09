@@ -204,6 +204,10 @@ where
 	grid
 }
 
+
+/// Compute a Mandelbrot screen part. Division for each threads, in `limit_on_screen_mandelbrot`.
+/// 
+/// Draw only a rectangle from point `stat` to `end`.
 fn limit_on_screen_mandelbrot_part<F>(
 	z0: complex::Algebraic,
 	f: F,
@@ -313,7 +317,9 @@ where
 			);
 			sender_local
 				.send(result)
-				.expect(&format!("(X) divergence::maths::limit_on_screen_julia() Couldn't send payload."));
+				.expect(&format!(
+					"(X) divergence::maths::limit_on_screen_julia() Couldn't send payload."
+				));
 		});
 
 		threads.push(handler);
@@ -374,7 +380,10 @@ where
 			);
 			line.push(limit(
 				c,
-				complex::Algebraic::new(complex_position[0], complex_position[1]),
+				complex::Algebraic::new(
+					complex_position[0], 
+					complex_position[1]
+				),
 				&f,
 				threshold,
 				iterations,

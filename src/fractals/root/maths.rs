@@ -171,12 +171,14 @@ where
 	}
 
 	/// # Path of each in point of screen.
+	/// *Single threaded*.
+	/// 
 	/// Compute the limit for each point in `size` [width, height].
 	/// 
 	/// It is Newton's like, which is:
-	/// - z0 is pixel.x + i*pixel.y,
-	/// - returns a `Vec<IsRoot>`, coordinates of the root reached.
-	pub fn limit_on_screen(self: &mut Self) -> Vec<Vec<IsRoot>> {
+	/// - `z0` is `pixel.x + i*pixel.y`,
+	/// - returns a 2D table of "arrivals" `Vec<Vec<IsRoot>>`, coordinates of the root reached.
+	pub fn limit_on_screen_newton(self: &mut Self) -> Vec<Vec<IsRoot>> {
 		let mut grid: Vec<Vec<IsRoot>> = Vec::with_capacity(self.size[0] * self.size[1]);
 
 		for y in 0..self.size[1] {

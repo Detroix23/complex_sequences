@@ -160,7 +160,7 @@ where
 
 		let table: Vec<Vec<fractals::root::IsRoot>> = match self.method_id {
 			0 => {
-				root_finder.limit_on_screen()
+				root_finder.limit_on_screen_newton()
 			},
 			_ => panic!(
 				"(X) fractals::divergence::texture::Divergent::register_texture() `method_id` unknown ({}).", 
