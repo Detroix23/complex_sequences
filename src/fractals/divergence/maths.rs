@@ -132,16 +132,102 @@ pub fn limit_on_screen_mandelbrot<F>(
 	thread_count: usize,
 ) -> Vec<Vec<State>>
 where
-	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic,
+	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic+ Clone + Send + 'static,
 {
-	let mut grid: Vec<Vec<State>> = Vec::with_capacity(size[1]);
+	let mut threads: Vec<thread::JoinHandle<()>> = Vec::with_capacity(thread_count);
+	let (sender, receiver) = mpsc::channel();
 
-	for y in 0..size[1] {
+	let mut grid: Vec<Vec<State>> = Vec::with_capacity(size[1]);
+	let screen_size: [f32; 2] = [size[0] as f32, size[1] as f32];
+	
+	let mut sub_grids: Vec<Vec<Vec<State>>> = Vec::with_capacity(thread_count);
+	for _ in 0..thread_count {
+		sub_grids.push(Vec::new());
+	}
+
+	// Spawn threads.
+	for thread_id in 0..thread_count {
+		let sender_local = sender.clone();
+		let f_local: F = f.clone();
+
+		let handler: thread::JoinHandle<()> = thread::spawn(move || {
+			let id: usize = thread_id;
+			let start: [usize; 2] = [0, size[1] * thread_id / thread_count];
+			let end: [usize; 2] = [size[0], size[1] * (thread_id + 1) / thread_count];
+			
+			let sub_grid: Vec<Vec<State>> = limit_on_screen_mandelbrot_part(
+				z0, 
+				f_local, 
+				threshold, 
+				iterations, 
+				screen_size, 
+				start, 
+				end, 
+				position, 
+				zoom
+			);
+
+			let result: threading::GenerationPart<State> = threading::GenerationPart::new(
+				id,
+				(start, end),
+				sub_grid,
+			);
+			sender_local
+				.send(result)
+				.expect(&format!("(X) divergence::maths::limit_on_screen_julia() Couldn't send payload."));
+		});
+
+		threads.push(handler);
+	}	
+
+	// Collect results.
+	for iteration in 0..thread_count {
+		let result = receiver
+			.recv()
+			.expect(&format!(
+				"(X) divergence::maths::limit_on_screen_julia() Couldn't receive payload for iteration={}.", 
+				iteration
+			));
+		
+		sub_grids[result.thread_id] = result.data;
+	}
+
+	// Aggregate results.
+	for thread_id in 0..thread_count {
+		let sub_grid: &Vec<Vec<State>> = &sub_grids[thread_id];
+
+		for y in 0..sub_grid.len() {
+			grid.push(sub_grid[y].clone());
+		}
+	}
+
+	grid
+}
+
+fn limit_on_screen_mandelbrot_part<F>(
+	z0: complex::Algebraic,
+	f: F,
+	threshold: complex::Real, 
+	iterations: usize,
+	screen_size: [f32; 2],
+	start: [usize; 2],
+	end: [usize; 2],
+	position: [complex::Real; 2],
+	zoom: complex::Real,
+) -> Vec<Vec<State>>
+where
+	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Clone + Send + 'static,
+{
+	let size: [usize; 2] = [end[0] - start[0], end[1] - start[1]];
+	let mut grid: Vec<Vec<State>> = Vec::with_capacity(size[1]);
+	
+
+	for y in start[1]..end[1] {
 		let mut line: Vec<State> = Vec::with_capacity(size[0]); 
-		for x in 0..size[0] {
-			let complex_position = textures::position_from_pixel(
+		for x in start[0]..end[0] {
+			let complex_position: [f32; 2] = textures::position_from_pixel(
 				[x as f32, y as f32], 
-				[size[0] as f32, size[1] as f32], 
+				screen_size, 
 				zoom, 
 				position
 			);
@@ -282,9 +368,9 @@ where
 		for x in start[0]..end[0] {
 			let complex_position: [f32; 2] = textures::position_from_pixel(
 				[x as f32, y as f32], 
-				[screen_size[0], screen_size[1]], 
+				screen_size, 
 				zoom, 
-				position
+				position,
 			);
 			line.push(limit(
 				c,
