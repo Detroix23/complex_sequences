@@ -37,19 +37,42 @@ pub fn render_texture<Facade>(
 where
 	Facade: backend::Facade,
 {
+	let width: u32 = size[0] as u32;
+	let height: u32 = size[1] as u32;	
+
+
+	// Verification.
+	let size_expected: u32 = width * height;
+	let size_data: u32 = (data.len() / match format {
+			ColorFormat::RGB => 3_usize,
+			ColorFormat::RGBA => 4_usize,
+	}) as u32;
+	if size_expected != size_data {
+		panic!("
+(X) support::rendering::render_texture() Expected size and `data` size mismatch.
+Details:
+```
+  width * height != size_data
+  {} * {} = {} != {}
+```
+",
+			width, height, width * height, size_data
+		);
+	}
+
 	// Render (from `imgui-examples`, `custom_texture`).
 	let raw = texture::RawImage2d {
 		data: borrow::Cow::Owned(data),
-		width: size[0] as u32,
-		height: size[1] as u32,
+		width,
+		height,
 		format: match format {
 			ColorFormat::RGB => texture::ClientFormat::U8U8U8,
 			ColorFormat::RGBA => texture::ClientFormat::U8U8U8U8,
 		},
 	};
 
-	let gl_texture = glium::Texture2d::new(gl_context, raw)?;
-	
+	let gl_texture: glium::Texture2d = glium::Texture2d::new(gl_context, raw)?;
+
 	let texture = imgui_glium_renderer::Texture {
 		texture: rc::Rc::new(gl_texture),
 		sampler: uniforms::SamplerBehavior {

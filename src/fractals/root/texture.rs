@@ -191,7 +191,8 @@ where
 		
 		let root_count: usize = root_finder.get_roots().len();
 		eprintln!(
-			"(?) Root: t={} zoom={} pos=({}; {}) roots={}", 
+			"(?) Root {}: t={} zoom={} pos=({}; {}) roots={}", 
+			self.method_id,
 			match self.generation_time {
 				Option::None => "()",
 				Option::Some(elapsed) => &format!("{:?}", elapsed),

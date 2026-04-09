@@ -19,7 +19,7 @@ pub fn listen(
 	window_size: (u32, u32),
 	position: [f32; 2], 
 	zoom: f32,
-	scale: f32,
+	_scale: f32,
 ) -> rendering::ViewportSettings {
 	let mouse_position: [f32; 2] = ui.io().mouse_pos;
 	let mut viewport: rendering::ViewportSettings = rendering::ViewportSettings{ position, zoom };

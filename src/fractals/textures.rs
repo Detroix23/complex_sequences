@@ -214,12 +214,14 @@ pub fn convert_root_table_to_data(
 	}
 }
 
+/// From a `pixel` position, on a screen of `size`, with camera `zoom` and `position`,
+/// get the corresponding point in the complex plane.
 pub fn position_from_pixel(
-	coordinates: [complex::Real; 2], 
+	pixel: [complex::Real; 2], 
 	size: [complex::Real; 2],
 	zoom: complex::Real,
-	position: [complex::Real; 2],
+	camera_position: [complex::Real; 2],
 ) -> [complex::Real; 2] {[
-	(coordinates[0] - size[0] / 2.0) / zoom - position[0], 
-	(coordinates[1] - size[1] / 2.0) / zoom - position[1],
+	(pixel[0] - size[0] / 2.0) / zoom - camera_position[0], 
+	(pixel[1] - size[1] / 2.0) / zoom - camera_position[1],
 ]}

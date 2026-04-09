@@ -12,6 +12,7 @@ use crate::fractals::textures;
 
 /// # Divergence `State`.
 /// Tell if a function explode toward infinity or remains bounded.
+#[derive(Debug, 	Clone, Copy)]
 pub enum State {
 	/// Divergent: in how many `iterations` does it diverged. 
 	Divergent{ iterations: usize },
@@ -175,13 +176,66 @@ where
 	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic,
 {
 	let mut grid: Vec<Vec<State>> = Vec::with_capacity(size[1]);
+	let screen_size: [f32; 2] = [size[0] as f32, size[1] as f32];
+	let mut sub_grids: [Vec<Vec<State>>; 4] = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
 
-	for y in 0..size[1] {
+	// Testing division with 4 fake threads.
+	const THREAD_COUNT: usize = 4;
+
+	for thread_id in 0..THREAD_COUNT {
+		let start: [usize; 2] = [0, size[1] / THREAD_COUNT * thread_id];
+		let end: [usize; 2] = [size[0], size[1] / THREAD_COUNT * (thread_id + 1)];
+
+		sub_grids[thread_id] = limit_on_screen_julia_part(
+			c, 
+			&f, 
+			threshold, 
+			iterations, 
+			screen_size, 
+			start, 
+			end, 
+			position, 
+			zoom
+		);
+	}	
+
+	for thread_id in 0..THREAD_COUNT {
+		let sub_grid: &Vec<Vec<State>> = &sub_grids[thread_id];
+
+		for y in 0..sub_grid.len() {
+			grid.push(sub_grid[y].clone());
+		}
+	}
+
+	grid	
+}
+
+/// Compute a Julia screen part. Division for each threads.
+/// 
+/// Draw only a rectangle from point `stat` to `end`.
+fn limit_on_screen_julia_part<F>(
+	c: complex::Algebraic,
+	f: F,
+	threshold: complex::Real, 
+	iterations: usize,
+	screen_size: [f32; 2],
+	start: [usize; 2],
+	end: [usize; 2],
+	position: [complex::Real; 2],
+	zoom: complex::Real,
+) -> Vec<Vec<State>>
+where
+	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic,
+{
+	let size: [usize; 2] = [end[0] - start[0], end[1] - start[1]];
+	let mut grid: Vec<Vec<State>> = Vec::with_capacity(size[1]);
+
+	for y in start[1]..end[1] {
 		let mut line: Vec<State> = Vec::with_capacity(size[0]); 
-		for x in 0..size[0] {
-			let complex_position = textures::position_from_pixel(
+		for x in start[0]..end[0] {
+			let complex_position: [f32; 2] = textures::position_from_pixel(
 				[x as f32, y as f32], 
-				[size[0] as f32, size[1] as f32], 
+				[screen_size[0], screen_size[1]], 
 				zoom, 
 				position
 			);
@@ -196,8 +250,5 @@ where
 
 		grid.push(line);
 	}
-
-
-
 	grid
 }

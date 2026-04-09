@@ -187,6 +187,14 @@ where
 		self.iterations_total = data.iterations_total;
 		self.generation_time = Option::Some(generation_start.elapsed());
 		
+		eprintln!(
+			"\r(?) Divergent {} Rendering: zoom={} pos=({}; {})", 
+			self.method_id,
+			self.zoom,
+			self.position[0],
+			self.position[1],
+		);
+
 		self.texture_id = Option::Some(rendering::render_texture(
 			self.texture_id, 
 			data.raw_pixels, 
@@ -197,7 +205,8 @@ where
 		).expect("(X) fractals::divergence::texture::Divergent::register_texture() render_texture error."));
 
 		eprintln!(
-			"(?) Divergent: t={} zoom={} pos=({}; {})", 
+			"\r(?) Divergent {}: t={} zoom={} pos=({}; {})", 
+			self.method_id,
 			match self.generation_time {
 				Option::None => "()",
 				Option::Some(elapsed) => &format!("{:?}", elapsed),
@@ -206,7 +215,6 @@ where
 			self.position[0],
 			self.position[1],
 		);
-
 
 		Ok(())
 	}
