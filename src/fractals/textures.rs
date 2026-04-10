@@ -4,7 +4,7 @@
 use std::{error, fmt, convert};
 
 use glium; 
-use complex_rust as complex;
+use complex;
 
 use crate::fractals;
 use crate::gui::color;

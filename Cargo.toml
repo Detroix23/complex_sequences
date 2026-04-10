@@ -1,6 +1,6 @@
 [package]
 name = "complex_sequences"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2024"
 description = "Graph complex sequences using Imgui."
 
@@ -15,4 +15,4 @@ imgui = { git = "https://github.com/imgui-rs/imgui-rs", version = "0.12", featur
 ] }
 imgui-winit-support = { version = "0.13", git = "https://github.com/imgui-rs/imgui-winit-support" }
 
-complex_rust = { path = "../complex_rust" }
+complex = { git = "https://github.com/Detroix23/complex_rust", version = "0.0.3" }

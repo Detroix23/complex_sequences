@@ -4,7 +4,7 @@
 //! Helpers to register settings.
 
 use imgui;
-use complex_rust as complex;
+use complex;
 
 /// Build a header and 2 sliders for a `complex::Algebraic` number.
 pub fn complex_2_sliders(

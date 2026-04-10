@@ -13,7 +13,7 @@ use glium::{
 	backend::Facade,
 };
 use imgui;
-use complex_rust as complex;
+use complex;
 
 use crate::fractals::{
 	self,

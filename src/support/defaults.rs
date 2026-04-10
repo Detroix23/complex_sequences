@@ -1,7 +1,7 @@
 //! # Complex sequences.
 //! src/support/defaults.rs
 
-use complex_rust as complex;
+use complex;
 
 /// 2 degree polynomial with `c` coefficient
 #[allow(dead_code)]

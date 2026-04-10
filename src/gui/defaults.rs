@@ -10,7 +10,7 @@ use std::{
 
 use glium;
 use imgui;
-use complex_rust as complex;
+use complex;
 
 use crate::support;
 use crate::fractals;
@@ -44,8 +44,8 @@ pub fn launch_default() -> () {
 	let divergent_texture_update = divergent_texture.clone();
 	
 	let root_texture = fractals::root::Root::new(
-		|z: complex_rust::Algebraic| z * z * z + complex::Algebraic::new(1.0, 0.0),
-		|z: complex_rust::Algebraic| complex::Algebraic::new(3.0, 0.0) * z * z,
+		|z: complex::Algebraic| z * z * z + complex::Algebraic::new(1.0, 0.0),
+		|z: complex::Algebraic| complex::Algebraic::new(3.0, 0.0) * z * z,
 		[400.0, 100.0],
 		[0.0, 0.0],
 		1.0,

@@ -10,7 +10,7 @@ use std::{cell, error, rc, time};
 use glium::{self, backend};
 use imgui;
 use imgui_glium_renderer;
-use complex_rust as complex;
+use complex;
 
 use crate::{fractals, gui};
 use crate::support::rendering;

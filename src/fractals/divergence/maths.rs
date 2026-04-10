@@ -6,8 +6,8 @@
 use std::{fmt, convert, thread};
 use std::sync::mpsc;
 
-use complex_rust as complex;
-use complex::Shared;
+use complex;
+use complex::Complex;
 
 use crate::fractals::{threading, textures};
 

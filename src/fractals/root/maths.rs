@@ -5,7 +5,8 @@
 
 use std::{convert, fmt};
 
-use complex_rust::{self as complex, Shared};
+use complex;
+use complex::Complex;
 
 use crate::fractals::textures;
 
@@ -118,7 +119,7 @@ where
 	/// 
 	/// Return the root reference.
 	pub fn append_root(self: &mut Self, root: complex::Algebraic) -> complex::Algebraic {
-		let mut reference: complex_rust::Algebraic = root;
+		let mut reference: complex::Algebraic = root;
 
 		for known in &self.roots {
 			if known.distance_to_squared(root) < self.threshold * self.threshold {
@@ -148,8 +149,8 @@ where
 	fn newton_method(self: &mut Self, z0: complex::Algebraic) -> IsRoot {
 		let mut z: complex::Algebraic = z0;
 		let mut count: usize = 0;
-		let mut current_fz: complex_rust::Algebraic = (self.function)(z);
-		let mut current_dz: complex_rust::Algebraic;
+		let mut current_fz: complex::Algebraic = (self.function)(z);
+		let mut current_dz: complex::Algebraic;
 
 		while count < self.iterations 
 			&& current_fz.absolute_squared() > self.threshold * self.threshold 	
@@ -163,7 +164,7 @@ where
 		current_fz = (self.function)(z);
 
 		if current_fz.absolute_squared() <= self.threshold * self.threshold {
-			let reference: complex_rust::Algebraic = self.append_root(z);
+			let reference: complex::Algebraic = self.append_root(z);
 			IsRoot::Yes{ root: reference, iterations: count }
 		} else {
 			IsRoot::No
