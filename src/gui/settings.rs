@@ -14,41 +14,18 @@ use glium::backend::Facade;
 use imgui;
 use complex;
 
+use crate::structures::{configuration, color};
 use crate::fractals;
 use crate::fractals::textures::Fractal;
 use crate::gui;
 
-/// # `Settings` state.
-/// Store only persistent settings.
-pub struct Settings {
-	/// Fractal family, method id.
-	/// ```rust, no_run
-	/// 0. Debug
-	/// 1. Divergence,
-	/// 2. Roots,
-	/// ```
-	pub method_id: usize,
-	pub enable_grid: bool,
-	pub color_mode_id: usize,
-	pub color_mode: fractals::ColorMode,
-}
-
-impl Default for Settings {
-	fn default() -> Self {
-		Settings { 
-			// 0 is debug.
-			method_id: 1usize, 
-			enable_grid: true,
-			color_mode_id: 0,
-			color_mode: fractals::textures::ColorMode::GRAYSCALE,
-		}
-	}
-}
-
 /// A `combo` selector for the general fractal family.
 /// 
 /// Item shared in all family. 
-fn family_selector(ui: &imgui::Ui, settings: rc::Rc<cell::RefCell<Settings>>) -> () {
+fn family_selector(
+	ui: &imgui::Ui, 
+	settings: rc::Rc<cell::RefCell<configuration::GlobalSettings>>
+) -> () {
 	ui.combo(
 		"Method", 
 		&mut settings.borrow_mut().method_id, 
@@ -58,14 +35,17 @@ fn family_selector(ui: &imgui::Ui, settings: rc::Rc<cell::RefCell<Settings>>) ->
 } 
 
 /// A `combo` selector for the color mode.
-fn color_mode_selector(ui: &imgui::Ui, settings: rc::Rc<cell::RefCell<Settings>>) -> () {
+fn color_mode_selector(
+	ui: &imgui::Ui, 
+	settings: rc::Rc<cell::RefCell<configuration::GlobalSettings>>
+) -> () {
 	let mut color_mode_id: usize = settings.borrow().color_mode_id;
 	
 	ui.combo(
 		"Color mode", 
 		&mut color_mode_id, 
-		&fractals::ColorMode::list(), 
-		| mode: &fractals::ColorMode | {
+		&color::ColorMode::list(), 
+		| mode: &color::ColorMode | {
 			settings.borrow_mut().color_mode = mode.clone();
 			borrow::Cow::Borrowed(mode.as_ref())
 		},
@@ -80,7 +60,7 @@ fn color_mode_selector(ui: &imgui::Ui, settings: rc::Rc<cell::RefCell<Settings>>
 pub fn show_settings_divergent<F>(
 	size: [complex::Real; 2],
 	position: [complex::Real; 2],
-	settings: rc::Rc<cell::RefCell<Settings>>,
+	settings: rc::Rc<cell::RefCell<configuration::GlobalSettings>>,
 	ui: &imgui::Ui,
 	// Rc<RefCell<Divergent<impl Fn(Algebraic, Algebraic) -> Algebraic>>>
 	divergent_texture: rc::Rc<cell::RefCell<fractals::divergence::Divergent<F>>>,
@@ -124,15 +104,15 @@ where
 					.borrow_mut()
 					.register_texture(
 						display.get_context(), 
+						settings.clone(),
 						renderer.textures(), 
-						settings.borrow().color_mode,
 					)
 					.expect("(!) gui::default::launch_default() run_ui: can't register texture.");
 			}
 
 			// Scale.
 			ui.slider_config("Resolution scale", 1.0, 10.0)
-				.build(&mut divergent_texture.borrow_mut().scale);
+				.build(&mut settings.borrow_mut().resolution_scale);
 
 			// Zoom slider.
 			ui.slider_config("Zoom", 1.0, 100000.0)
@@ -184,7 +164,7 @@ where
 pub fn show_settings_root<F, D>(
 	size: [complex::Real; 2],
 	position: [complex::Real; 2],
-	settings: rc::Rc<cell::RefCell<Settings>>,
+	settings: rc::Rc<cell::RefCell<configuration::GlobalSettings>>,
 	ui: &imgui::Ui,
 	root_texture: rc::Rc<cell::RefCell<fractals::root::Root<F, D>>>,
 	renderer: &mut imgui_glium_renderer::Renderer, 
@@ -220,22 +200,25 @@ where
 				&fractals::root::RootMethod::list(),
 				| limit: &fractals::root::RootMethod | borrow::Cow::Borrowed(limit.as_ref()),
 			);
-			color_mode_selector(ui, settings.clone());
-			
+
+			if root_texture.borrow().method_id == 0 {
+				color_mode_selector(ui, settings.clone());
+			}
+
 			// Force update.
 			if ui.button("Force update.") {
 				root_texture.borrow_mut()
 					.register_texture(
 						display.get_context(), 
+						settings.clone(),
 						renderer.textures(), 
-						settings.borrow().color_mode,
 					)
 					.expect("(!) gui::default::launch_default() run_ui: can't register texture.");
 			}
 
 			// Scale.
 			ui.slider_config("Resolution scale", 1.0, 10.0)
-				.build(&mut root_texture.borrow_mut().scale);
+				.build(&mut settings.borrow_mut().resolution_scale);
 
 			// Zoom slider.
 			ui.slider_config("Zoom", 1.0, 100000.0)
@@ -261,15 +244,20 @@ where
 
 			ui.new_line();
 
-			// Iterations.
-			ui.slider_config("Iteration", 1_usize, 250_usize)
-				.build(&mut root_texture.borrow_mut().iterations);
+			if root_texture.borrow().method_id == 0 {
+				// Iterations.
+				ui.slider_config("Iteration", 1_usize, 250_usize)
+					.build(&mut root_texture.borrow_mut().iterations);
 
-			// Threshold for root acceptation.
-			ui.slider_config("Threshold", 0.00000001, 2.0)
-				.flags(imgui::SliderFlags::NO_ROUND_TO_FORMAT)
-				.build(&mut root_texture.borrow_mut().threshold);
-			
+				// Threshold for root acceptation.
+				ui.slider_config("Threshold", 0.00000001, 2.0)
+					.flags(imgui::SliderFlags::NO_ROUND_TO_FORMAT)
+					.build(&mut root_texture.borrow_mut().threshold);
+			} else if root_texture.borrow().method_id == 1 {
+				// Degree 0.
+				ui.slider_config("Degree 0", 0_f64, 360_f64)
+					.build(&mut root_texture.borrow_mut().degree0);
+			}
 		});
 }
 
@@ -277,7 +265,7 @@ where
 pub fn show_settings_debug(
 	size: [complex::Real; 2],
 	position: [complex::Real; 2],
-	settings: rc::Rc<cell::RefCell<Settings>>,
+	settings: rc::Rc<cell::RefCell<configuration::GlobalSettings>>,
 	ui: &imgui::Ui,
 ) -> () {
 	// Window: settings.

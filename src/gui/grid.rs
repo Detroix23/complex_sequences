@@ -7,8 +7,8 @@ use imgui;
 use glium::{self, backend};
 use glium::backend::Facade;
 
+use crate::structures::{color, configuration};
 use crate::support::rendering;
-use crate::gui::{color, settings};
 
 /// # Draw a `Grid` atop of a fractal texture.
 /// 
@@ -101,7 +101,7 @@ impl Grid {
 
 /// Draw a frame for `Grid`.
 pub fn draw(
-	_settings_state: rc::Rc<cell::RefCell<settings::Settings>>,
+	_settings_state: rc::Rc<cell::RefCell<configuration::GlobalSettings>>,
 	ui: &imgui::Ui,
 	// Rc<RefCell<Divergent<impl Fn(Algebraic, Algebraic) -> Algebraic>>>
 	grid: rc::Rc<cell::RefCell<Grid>>,

@@ -8,13 +8,18 @@ use std::{thread, num};
 pub struct GenerationPart<T> {
 	pub thread_id: usize,
 	/// (`start`, `end`).
+	#[allow(dead_code)]
 	pub bounding_box: ([usize; 2], [usize; 2]),
 	pub data: Vec<Vec<T>>,
 }
 
 impl<T> GenerationPart<T> {
 	pub fn new(thread_id: usize, bounding_box: ([usize; 2], [usize; 2]), data: Vec<Vec<T>>) -> GenerationPart<T> {
-		GenerationPart { thread_id, bounding_box, data }
+		GenerationPart { 
+			thread_id, 
+			bounding_box, 
+			data 
+		}
 	}
 }
 

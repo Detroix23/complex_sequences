@@ -12,9 +12,10 @@ use glium;
 use imgui;
 use complex;
 
+use crate::structures::{color, configuration};
 use crate::support;
 use crate::fractals;
-use crate::gui::{settings, color, debug, grid, mouse};
+use crate::gui::{debug, grid, mouse};
 
 
 const WINDOW_SIZE: [u32; 2] = [1024, 768];
@@ -65,10 +66,12 @@ pub fn launch_default() -> () {
 		100, 
 		2,
 	);
-	let grid_draw = grid_update.clone();
+	let grid_draw: rc::Rc<cell::RefCell<grid::Grid>> = grid_update.clone();
 
-	let settings_state = rc::Rc::new(cell::RefCell::new(settings::Settings::default()));
-	let settings_state_update = settings_state.clone();
+	let settings_state: rc::Rc<cell::RefCell<configuration::GlobalSettings>> = rc::Rc::new(
+		cell::RefCell::new(configuration::GlobalSettings::default())
+	);
+	let settings_state_update: rc::Rc<cell::RefCell<configuration::GlobalSettings>> = settings_state.clone();
 	
 	// Get `Display` size with `display.get_framebuffer_dimensions()`
 	let mut window_size: (u32, u32) = (0, 0);

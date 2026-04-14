@@ -1,6 +1,7 @@
 //! # Complex sequences.
 //! src/main.rs  
 
+mod structures;
 mod support;
 mod gui;
 mod fractals;

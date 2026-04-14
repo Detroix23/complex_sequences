@@ -1,56 +1,14 @@
 //! # Complex sequences.
 //! src/fractals/textures.rs
 
-use std::{f32, error, fmt, convert};
+use std::ops::Rem;
+use std::{error, rc, cell};
 
 use glium; 
 use complex::{self, Complex};
 
+use crate::structures::{configuration, color};
 use crate::fractals;
-use crate::gui::color;
-
-/// `ColorMode`:
-/// ```
-/// 0. `GRAYSCALE`,
-/// 1. `HSV`.
-/// ``````
-#[derive(Clone, Copy)]
-pub enum ColorMode {
-	GRAYSCALE,
-	HSV,
-}
-
-impl ColorMode {
-	/// Returns a vector of all `ColorMode`s.
-	pub fn list() -> Vec<ColorMode> {
-		vec![
-			ColorMode::GRAYSCALE,
-			ColorMode::HSV,
-		]
-	}
-
-	fn to_static_str(self: &Self) -> &'static str {
-		match &self {
-			ColorMode::GRAYSCALE => "0. Grayscale.",
-			ColorMode::HSV => "1. HSV.",
-		}
-	}
-}
-
-impl fmt::Display for ColorMode {
-	fn fmt(self: &Self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-		write!(formatter, "Method::{}", match &self {
-			ColorMode::GRAYSCALE => "Grayscale",
-			ColorMode::HSV => "HSV",
-		})
-	}
-}
-
-impl convert::AsRef<str> for ColorMode {
-	fn as_ref(self: &Self) -> &str {
-		&self.to_static_str()
-	}
-}
 
 pub trait Fractal {
 	fn update_size(self: &mut Self, new_size: [u32; 2]) -> ();
@@ -63,8 +21,8 @@ pub trait Fractal {
 	fn register_texture<Facade>(
         &mut self,
         gl_context: &Facade,
+		global_settings: rc::Rc<cell::RefCell<configuration::GlobalSettings>>,
         textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
-		color_mode: fractals::textures::ColorMode,
     ) -> Result<(), Box<dyn error::Error>>
     where
         Facade: glium::backend::Facade;
@@ -87,7 +45,7 @@ pub fn convert_state_table_to_data(
 	stable: color::Rgb, 
 	divergent: color::Rgb,
 	iterations_max: usize,
-	color_mode: ColorMode,
+	color_mode: color::ColorMode,
 ) -> Data {
 	let mut data: Vec<u8> = Vec::new();
 	let mut iterations_total: usize = 0;
@@ -99,7 +57,7 @@ pub fn convert_state_table_to_data(
 					let weight: f64 = iterations as f64 / iterations_max as f64;
 
 					match color_mode {
-						ColorMode::HSV => {
+						color::ColorMode::HSV => {
 							let color: color::Rgb = color::Hsv::new(
 								weight * 359.9, 
 								1.0 - weight, 
@@ -109,7 +67,7 @@ pub fn convert_state_table_to_data(
 							data.push(color.green);
 							data.push(color.blue);
 						},
-						ColorMode::GRAYSCALE => {
+						color::ColorMode::GRAYSCALE => {
 							let color: color::Rgb = color::Rgb::new(
 								(divergent.red as f64 * weight) as u8,
 								(divergent.green as f64 * weight) as u8,
@@ -145,7 +103,7 @@ pub struct NewtonConverter {
 	threshold: complex::Real,
 	no_root_color: color::Rgb,
 	iterations_max: usize,
-	color_mode: ColorMode,
+	color_mode: color::ColorMode,
 	data: Vec<u8>,
 	iterations_total: usize,
 	loss_counter: usize,
@@ -158,7 +116,7 @@ impl NewtonConverter {
 		threshold: complex::Real,
 		no_root_color: color::Rgb,
 		iterations_max: usize,
-		color_mode: ColorMode,
+		color_mode: color::ColorMode,
 	) -> NewtonConverter {
 		NewtonConverter {
 			roots,
@@ -201,14 +159,14 @@ impl NewtonConverter {
 				let weight: f64 = iterations as f64 / self.iterations_max as f64;
 				let root_slider: f64 = root_id as f64 / self.roots.len() as f64;
 				let color: color::Rgb = match self.color_mode {
-					ColorMode::HSV => {
+					color::ColorMode::HSV => {
 						color::Hsv::new(
 							root_slider * 360.0, 
 							1.0 - weight, 
 							1.0 - weight,
 						).to_rgb()
 					},
-					ColorMode::GRAYSCALE => {
+					color::ColorMode::GRAYSCALE => {
 						color::Grayscale::new(root_slider).to_rgb()
 					}
 				};
@@ -265,11 +223,11 @@ pub fn position_from_pixel(
 pub struct PositionConverter {
 	data: Vec<u8>,
 	iterations_total: usize,
-	degree0: f32,
+	degree0: f64,
 }
 
 impl PositionConverter {
-	pub fn new(degree0: f32) -> PositionConverter {
+	pub fn new(degree0: f64) -> PositionConverter {
 		PositionConverter { 
 			data: Vec::new(), 
 			iterations_total: 0,
@@ -288,9 +246,8 @@ impl PositionConverter {
 	fn color_for_point(self: &Self, z: complex::Polar) -> color::Rgb {
 		const PI: f64 = std::f64::consts::PI;
 		let absolute: f64 = z.absolute() as f64;
-		let angle: f64 = (z.argument() as f64 + PI) * 359.9 / (2.0 * PI)
-			.max(0.0)
-			.min(359.9);
+		let angle: f64 = ((z.argument() as f64 + PI) * 359.9 / (2.0 * PI) + self.degree0)
+			.rem(360.0);
 	
 		color::Hsv::new(
 			angle,

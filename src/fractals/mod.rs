@@ -9,5 +9,4 @@ pub mod divergence;
 pub mod root;
 pub mod methods;
 
-pub use textures::ColorMode;
 pub use methods::Method;

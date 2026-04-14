@@ -1,6 +1,8 @@
 //! # Complex sequences.
 //! src/gui/color.rs
 
+use std::{fmt, convert};
+
 /// # Float `Grayscale`.
 /// Value:
 /// - `0.0` is pitch black;
@@ -101,6 +103,51 @@ impl Hsv {
 	}
 }
 
+
+/// # `ColorMode`:
+/// ```ignore,
+/// 0. `GRAYSCALE`,
+/// 1. `HSV`.
+/// ``````
+#[derive(Clone, Copy)]
+pub enum ColorMode {
+	GRAYSCALE,
+	HSV,
+}
+
+impl ColorMode {
+	/// Returns a vector of all `ColorMode`s.
+	pub fn list() -> Vec<ColorMode> {
+		vec![
+			ColorMode::GRAYSCALE,
+			ColorMode::HSV,
+		]
+	}
+
+	fn to_static_str(self: &Self) -> &'static str {
+		match &self {
+			ColorMode::GRAYSCALE => "0. Grayscale.",
+			ColorMode::HSV => "1. HSV.",
+		}
+	}
+}
+
+impl fmt::Display for ColorMode {
+	fn fmt(self: &Self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+		write!(formatter, "Method::{}", match &self {
+			ColorMode::GRAYSCALE => "Grayscale",
+			ColorMode::HSV => "HSV",
+		})
+	}
+}
+
+impl convert::AsRef<str> for ColorMode {
+	fn as_ref(self: &Self) -> &str {
+		&self.to_static_str()
+	}
+}
+
+
 #[test]
 fn test_hsv_to_rgb() -> () {
 	for d in 0..360 {
@@ -113,3 +160,4 @@ fn test_hsv_to_rgb() -> () {
 		);
 	}
 }
+

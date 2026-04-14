@@ -12,7 +12,8 @@ use imgui;
 use imgui_glium_renderer;
 use complex;
 
-use crate::{fractals, gui};
+use crate::structures::{color, configuration};
+use crate::fractals;
 use crate::support::rendering;
 
 
@@ -52,8 +53,8 @@ where
 	scale_last: f32,
 
 	/// Graphics.
-	color_stable: gui::color::Rgb,
-	color_divergent: gui::color::Rgb,
+	color_stable: color::Rgb,
+	color_divergent: color::Rgb,
 }
 
 impl<F> Divergent<F> 
@@ -71,8 +72,8 @@ where
 		iterations: usize,
 		threshold: complex::Real,
 		method_id: usize,
-		color_stable: gui::color::Rgb,
-		color_divergent: gui::color::Rgb,
+		color_stable: color::Rgb,
+		color_divergent: color::Rgb,
 	) -> rc::Rc<cell::RefCell<Divergent<F>>> {
 		rc::Rc::new(cell::RefCell::new(Divergent {
 			function,
@@ -142,15 +143,17 @@ where
 	fn register_texture<Facade>(
         &mut self,
         gl_context: &Facade,
+		global_settings: rc::Rc<cell::RefCell<configuration::GlobalSettings>>,
         textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
-		color_mode: fractals::textures::ColorMode,
     ) -> Result<(), Box<dyn error::Error>>
     where
         Facade: backend::Facade,
     {	
+		let scale: f32 = global_settings.borrow().resolution_scale;
+		self.scale = scale;
 		let scaled_size: [usize; 2] = [
-			(self.size[0] as f32 / self.scale) as usize, 
-			(self.size[1] as f32 / self.scale) as usize
+			(self.size[0] as f32 / scale) as usize, 
+			(self.size[1] as f32 / scale) as usize
 		];
 		self.thread_count = fractals::threading::determine_threads().into();
 			
@@ -165,7 +168,7 @@ where
 				self.iterations, 
 				scaled_size,
 				self.position,
-				self.zoom / self.scale,
+				self.zoom / scale,
 				self.thread_count,
 			),
 			1 => fractals::divergence::maths::limit_on_screen_julia(
@@ -175,7 +178,7 @@ where
 				self.iterations, 
 				scaled_size,
 				self.position,
-				self.zoom / self.scale,
+				self.zoom / scale,
 				self.thread_count,
 			),
 			_ => panic!("(X) fractals::divergence_texture::Divergent::register_texture() `method_id` unknown ({}).", self.method_id),
@@ -186,7 +189,7 @@ where
 			self.color_stable,
 			self.color_divergent,
 			self.iterations,
-			color_mode,
+			global_settings.borrow().color_mode,
 		);
 
 		self.iterations_total = data.iterations_total;

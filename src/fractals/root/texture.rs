@@ -10,7 +10,8 @@ use imgui;
 use imgui_glium_renderer;
 use complex;
 
-use crate::{fractals, gui};
+use crate::structures::{configuration, color};
+use crate::fractals;
 use crate::support::rendering;
 
 
@@ -37,6 +38,7 @@ where
 	pub iterations: usize,
 	pub threshold: complex::Real,
 	pub method_id: usize,
+	pub degree0: f64,
 
 	// Variables to check if state is modified.
 	zoom_last: complex::Real,
@@ -45,9 +47,10 @@ where
 	threshold_last: complex::Real,
 	method_id_last: usize,
 	scale_last: f32,
+	degree0_last: f64,
 
 	/// Graphics.
-	color_no_root: gui::color::Rgb,
+	color_no_root: color::Rgb,
 
 }
 
@@ -67,7 +70,7 @@ where
 		iterations: usize,
 		threshold: complex::Real,
 		method_id: usize,
-		color_no_root: gui::color::Rgb,
+		color_no_root: color::Rgb,
 	) -> rc::Rc<cell::RefCell<Root<F, D>>> {
 		rc::Rc::new(cell::RefCell::new(Root {
 			function,
@@ -83,6 +86,7 @@ where
 			iterations,
 			threshold,
 			method_id,
+			degree0: 0.0,
 
 			zoom_last: 1.0,
 			position_last: [0.0, 0.0],
@@ -90,6 +94,7 @@ where
 			threshold_last: 0.0,
 			method_id_last: 0,
 			scale_last: 1.0,
+			degree0_last: 0.0,
 
 			color_no_root,
 		}))
@@ -112,7 +117,9 @@ where
 		} else if self.method_id_last != self.method_id {
 			self.method_id_last = self.method_id;
 		} else if self.scale_last != self.scale {
-			self.scale_last = self.scale
+			self.scale_last = self.scale;
+		} else if self.degree0_last != self.degree0 {
+			self.degree0_last = self.degree0;
 		} else {	
 			updated = false;
 		}
@@ -133,15 +140,17 @@ where
 	fn register_texture<Facade>(
         &mut self,
         gl_context: &Facade,
+		global_settings: rc::Rc<cell::RefCell<configuration::GlobalSettings>>,
         textures: &mut imgui::Textures<imgui_glium_renderer::Texture>,
-		color_mode: fractals::textures::ColorMode,
     ) -> Result<(), Box<dyn error::Error>>
     where
         Facade: backend::Facade,
     {	
+		let scale: f32 = global_settings.borrow().resolution_scale;
+		self.scale = scale;
 		let scaled_size: [usize; 2] = [
-			(self.size[0] as f32 / self.scale) as usize, 
-			(self.size[1] as f32 / self.scale) as usize,
+			(self.size[0] as f32 / scale) as usize, 
+			(self.size[1] as f32 / scale) as usize,
 		];
 		let mut root_finder: fractals::root::maths::RootFinder<&F, &D> = fractals::root::maths::RootFinder::new(
 			&self.function, 
@@ -150,7 +159,7 @@ where
 			self.iterations, 
 			scaled_size, 
 			self.position, 
-			self.zoom / self.scale,
+			self.zoom / scale,
 		);
 			
 		// Texture generation.
@@ -165,7 +174,7 @@ where
 					root_finder.get_threshold(),
 					self.color_no_root,
 					self.iterations,
-					color_mode,
+					global_settings.borrow().color_mode,
 				);
 
 				newton_converter.convert(table)
@@ -173,7 +182,7 @@ where
 			1 => {
 				let table: Vec<Vec<complex::Polar>> = root_finder.limit_on_screen_position();
 				let mut position_converter: fractals::textures::PositionConverter;
-				position_converter = fractals::textures::PositionConverter::new(0.0);
+				position_converter = fractals::textures::PositionConverter::new(self.degree0);
 
 				position_converter.convert(table)
 			},

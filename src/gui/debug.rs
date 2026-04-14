@@ -9,7 +9,8 @@ use imgui;
 use glium;
 use glium::backend::Facade;
 
-use crate::gui::{settings, color};
+use crate::structures::{color, configuration};
+use crate::gui::settings;
 use crate::support::rendering;
 use crate::fractals;
 
@@ -92,7 +93,7 @@ impl DebugTexture {
 
 /// Draw the UI of the `DebugTexture`.
 pub fn draw(
-	settings: rc::Rc<cell::RefCell<settings::Settings>>, 
+	settings: rc::Rc<cell::RefCell<configuration::GlobalSettings>>, 
 	ui: &imgui::Ui,
 	debug_texture: rc::Rc<cell::RefCell<DebugTexture>>,
 ) -> () {
