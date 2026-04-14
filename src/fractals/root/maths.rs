@@ -6,7 +6,7 @@
 use std::{convert, fmt};
 
 use complex;
-use complex::Complex;
+use complex::{Complex, ToComplex};
 
 use crate::fractals::textures;
 
@@ -25,17 +25,22 @@ pub enum IsRoot {
 /// # `RootMethod`.
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub enum RootMethod {
+	/// Use the Newton method (`f(x)/f'(x)`)to find a root.
 	Newton,
+	/// Color map of the complex plane through the function.
+	Position
 }
 
 impl RootMethod {
 	/// Return a `Vec` of all the methods.
 	/// ```rust, no_run
-	/// 1. Newton,
+	/// 1. Newton;
+	/// 2. Position.
 	/// ```
 	pub fn list() -> Vec<RootMethod> {
 		vec![
 			RootMethod::Newton,
+			RootMethod::Position,
 		]
 	}
 
@@ -43,6 +48,7 @@ impl RootMethod {
 	fn to_static_str(self: &Self) -> &'static str {
 		match &self {
 			RootMethod::Newton => "1. Newton",
+			RootMethod::Position => "2. Position",
 		}
 	}
 }
@@ -51,6 +57,7 @@ impl fmt::Display for RootMethod {
 	fn fmt(self: &Self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(formatter, "{}", match &self {
 			RootMethod::Newton => "1. Newton",
+			RootMethod::Position => "2. Position",
 		})
 	}
 }
@@ -196,6 +203,39 @@ where
 					complex_position[0], 
 					complex_position[1]
 				)));
+			}
+
+			grid.push(line);
+		}
+
+		grid
+	}
+
+	/// # Color the result of each point through the `function`.
+	/// *Single threaded.*
+	/// 
+	/// Use `Polar` complex representation:
+	/// - distance to origin is brightness (full white is 0);
+	/// - angle (theta, argument) is the color on the HSV wheel.
+	pub fn limit_on_screen_position(self: &Self) -> Vec<Vec<complex::Polar>> {
+		let mut grid: Vec<Vec<complex::Polar>> = Vec::with_capacity(self.size[0] * self.size[1]);
+
+		for y in 0..self.size[1] {
+			let mut line: Vec<complex::Polar> = Vec::with_capacity(self.size[0]); 
+			
+			for x in 0..self.size[0] {
+				let complex_position: [f32; 2] = textures::position_from_pixel(
+					[x as f32, y as f32], 
+					[self.size[0] as f32, self.size[1] as f32], 
+					self.zoom, 
+					self.position
+				);
+				let z = complex::Algebraic::new(
+					complex_position[0], 
+					complex_position[1]
+				);
+
+				line.push((self.function)(z).to_polar())
 			}
 
 			grid.push(line);

@@ -38,9 +38,9 @@ impl Rgb {
 }
 
 /// # `Hsv`. 3 components color.
-/// - `hue`: f64 in [0; 360[,
-/// - `saturation`: f64 in [0; 1],
-/// - `brightness` (or "value"): f64 in [0; 1],
+/// - `hue`: `f64` in [0; 360[; 0 and 360 are red.
+/// - `saturation`: `f64` in [0; 1]; 0 is monochrome.
+/// - `brightness` (or "value"): `f64` in [0; 1]; 1 is white.
 #[derive(Debug, Clone, Copy)]
 pub struct Hsv {
 	pub hue: f64,
@@ -54,7 +54,7 @@ impl Hsv {
 	/// - `saturation`: f64 in [0; 1],
 	/// - `brightness`: f64 in [0; 1].
 	pub fn new(hue: f64, saturation: f64, brightness: f64) -> Hsv {
-		if hue >= 360.0 || 0 > 0 {
+		if hue > 360.0 || 0 > 0 {
 			panic!("(X) gui::Hsv::new() `hue` ({}) must be in [0; 360[", hue);
 		} if saturation > 1.0 || 0.0 > saturation {
 			panic!("(X) gui::Hsv::new() `saturation` ({}) must be in [0; 1]", saturation);

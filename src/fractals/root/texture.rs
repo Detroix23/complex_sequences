@@ -5,9 +5,7 @@
 
 use std::{cell, error, rc, time};
 
-use glium::{
-	self, backend
-};
+use glium::{self, backend};
 use imgui;
 use imgui_glium_renderer;
 use complex;
@@ -158,24 +156,32 @@ where
 		// Texture generation.
 		let generation_start: time::Instant = time::Instant::now();
 
-		let table: Vec<Vec<fractals::root::IsRoot>> = match self.method_id {
+		let data = match self.method_id {
 			0 => {
-				root_finder.limit_on_screen_newton()
+				let table: Vec<Vec<fractals::root::IsRoot>> = root_finder.limit_on_screen_newton();
+				let mut newton_converter: fractals::textures::NewtonConverter;
+				newton_converter = fractals::textures::NewtonConverter::new(
+					root_finder.get_roots(),
+					root_finder.get_threshold(),
+					self.color_no_root,
+					self.iterations,
+					color_mode,
+				);
+
+				newton_converter.convert(table)
+			},
+			1 => {
+				let table: Vec<Vec<complex::Polar>> = root_finder.limit_on_screen_position();
+				let mut position_converter: fractals::textures::PositionConverter;
+				position_converter = fractals::textures::PositionConverter::new(0.0);
+
+				position_converter.convert(table)
 			},
 			_ => panic!(
 				"(X) fractals::divergence::texture::Divergent::register_texture() `method_id` unknown ({}).", 
 				self.method_id
 			),
 		};
-
-		let data: fractals::textures::Data = fractals::textures::convert_root_table_to_data(
-			table, 
-			root_finder.get_roots(),
-			root_finder.get_threshold(),
-			self.color_no_root,
-			self.iterations,
-			color_mode,
-		);
 
 		self.iterations_total = data.iterations_total;
 		self.generation_time = Option::Some(generation_start.elapsed());
