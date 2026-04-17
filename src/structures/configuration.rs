@@ -7,16 +7,11 @@ use crate::structures::color;
 /// Store only persistent settings.
 pub struct GlobalSettings {
 	/// Fractal family, method id.
-	/// ```rust, no_run
-	/// 0. Debug
-	/// 1. Divergence,
-	/// 2. Roots,
-	/// ```
 	pub method_id: usize,
 	pub enable_grid: bool,
 	pub color_mode_id: usize,
 	pub color_mode: color::ColorMode,
-	pub resolution_scale: f32,
+	pub resolution_scale: complex::Real,
 }
 
 impl Default for GlobalSettings {

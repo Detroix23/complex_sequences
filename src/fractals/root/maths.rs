@@ -193,9 +193,9 @@ where
 			let mut line: Vec<IsRoot> = Vec::with_capacity(self.size[0]); 
 			
 			for x in 0..self.size[0] {
-				let complex_position: [f32; 2] = textures::position_from_pixel(
-					[x as f32, y as f32], 
-					[self.size[0] as f32, self.size[1] as f32], 
+				let complex_position: [complex::Real; 2] = textures::position_from_pixel(
+					[x as complex::Real, y as complex::Real], 
+					[self.size[0] as complex::Real, self.size[1] as complex::Real], 
 					self.zoom, 
 					self.position
 				);
@@ -224,9 +224,9 @@ where
 			let mut line: Vec<complex::Polar> = Vec::with_capacity(self.size[0]); 
 			
 			for x in 0..self.size[0] {
-				let complex_position: [f32; 2] = textures::position_from_pixel(
-					[x as f32, y as f32], 
-					[self.size[0] as f32, self.size[1] as f32], 
+				let complex_position: [complex::Real; 2] = textures::position_from_pixel(
+					[x as complex::Real, y as complex::Real], 
+					[self.size[0] as complex::Real, self.size[1] as complex::Real], 
 					self.zoom, 
 					self.position
 				);

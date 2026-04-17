@@ -18,8 +18,8 @@ pub enum ColorFormat {
 
 /// # Named tuple for `ViewportSettings`.
 pub struct ViewportSettings {
-	pub position: [f32; 2],
-	pub zoom: f32,
+	pub position: [complex::Real; 2],
+	pub zoom: complex::Real,
 }
 
 /// Register and render a texture:

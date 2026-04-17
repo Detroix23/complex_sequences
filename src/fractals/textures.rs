@@ -30,7 +30,7 @@ pub trait Fractal {
 	/// Calls `window` method on `ui`, to display the texture. 
 	/// 
 	/// Source: `imgui-examples`, `custom_texture`
-	fn show_textures(self: &Self, ui: &imgui::Ui, position: [complex::Real; 2]) -> ();
+	fn show_textures(self: &Self, ui: &imgui::Ui, information_position: [f32; 2]) -> ();
 }
 
 /// # `Data` from holomorphic computations.

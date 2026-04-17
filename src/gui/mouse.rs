@@ -11,26 +11,30 @@
 //! ```
 
 use imgui;
+use complex;
 
 use crate::support::rendering;
 
 pub fn listen(
 	ui: &imgui::Ui, 
 	window_size: (u32, u32),
-	position: [f32; 2], 
-	zoom: f32,
-	_scale: f32,
+	position: [complex::Real; 2], 
+	zoom: complex::Real,
+	_scale: complex::Real,
 ) -> rendering::ViewportSettings {
-	let scroll_strength: f32 = 1.5;
+	let scroll_strength: complex::Real = 1.5;
 
-	let mouse_position: [f32; 2] = ui.io().mouse_pos;
-	let mouse_scroll: f32 = ui.io().mouse_wheel;
-	let mut viewport: rendering::ViewportSettings = rendering::ViewportSettings{ position, zoom };
+	let mouse_position: [complex::Real; 2] = [
+		ui.io().mouse_pos[0] as complex::Real, 
+		ui.io().mouse_pos[1] as complex::Real
+	];
+	let mouse_scroll: complex::Real = ui.io().mouse_wheel.into();
+	let mut viewport: rendering::ViewportSettings = rendering::ViewportSettings { position, zoom };
 
 	if ui.is_mouse_clicked(imgui::MouseButton::Middle) {
-		let selection_position: [f32; 2] = [
-			-(mouse_position[0] - window_size.0 as f32 / 2.0) / zoom + position[0],
-			-(mouse_position[1] - window_size.1 as f32 / 2.0) / zoom + position[1],
+		let selection_position: [complex::Real; 2] = [
+			-(mouse_position[0] - window_size.0 as complex::Real / 2.0) / zoom + position[0],
+			-(mouse_position[1] - window_size.1 as complex::Real / 2.0) / zoom + position[1],
 		];
 
 		println!(

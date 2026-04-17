@@ -138,7 +138,7 @@ where
 	let (sender, receiver) = mpsc::channel();
 
 	let mut grid: Vec<Vec<State>> = Vec::with_capacity(size[1]);
-	let screen_size: [f32; 2] = [size[0] as f32, size[1] as f32];
+	let screen_size: [complex::Real; 2] = [size[0] as complex::Real, size[1] as complex::Real];
 	
 	let mut sub_grids: Vec<Vec<Vec<State>>> = Vec::with_capacity(thread_count);
 	for _ in 0..thread_count {
@@ -213,7 +213,7 @@ fn limit_on_screen_mandelbrot_part<F>(
 	f: F,
 	threshold: complex::Real, 
 	iterations: usize,
-	screen_size: [f32; 2],
+	screen_size: [complex::Real; 2],
 	start: [usize; 2],
 	end: [usize; 2],
 	position: [complex::Real; 2],
@@ -229,8 +229,8 @@ where
 	for y in start[1]..end[1] {
 		let mut line: Vec<State> = Vec::with_capacity(size[0]); 
 		for x in start[0]..end[0] {
-			let complex_position: [f32; 2] = textures::position_from_pixel(
-				[x as f32, y as f32], 
+			let complex_position: [complex::Real; 2] = textures::position_from_pixel(
+				[x as complex::Real, y as complex::Real], 
 				screen_size, 
 				zoom, 
 				position
@@ -281,7 +281,7 @@ where
 	let (sender, receiver) = mpsc::channel();
 
 	let mut grid: Vec<Vec<State>> = Vec::with_capacity(size[1]);
-	let screen_size: [f32; 2] = [size[0] as f32, size[1] as f32];
+	let screen_size: [complex::Real; 2] = [size[0] as complex::Real, size[1] as complex::Real];
 	
 	let mut sub_grids: Vec<Vec<Vec<State>>> = Vec::with_capacity(thread_count);
 	for _ in 0..thread_count {
@@ -357,7 +357,7 @@ fn limit_on_screen_julia_part<F>(
 	f: F,
 	threshold: complex::Real, 
 	iterations: usize,
-	screen_size: [f32; 2],
+	screen_size: [complex::Real; 2],
 	start: [usize; 2],
 	end: [usize; 2],
 	position: [complex::Real; 2],
@@ -372,8 +372,8 @@ where
 	for y in start[1]..end[1] {
 		let mut line: Vec<State> = Vec::with_capacity(size[0]); 
 		for x in start[0]..end[0] {
-			let complex_position: [f32; 2] = textures::position_from_pixel(
-				[x as f32, y as f32], 
+			let complex_position: [complex::Real; 2] = textures::position_from_pixel(
+				[x as complex::Real, y as complex::Real], 
 				screen_size, 
 				zoom, 
 				position,

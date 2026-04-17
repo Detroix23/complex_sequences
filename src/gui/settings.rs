@@ -58,8 +58,8 @@ fn color_mode_selector(
 /// 
 /// Modify a `Divergent`.
 pub fn show_settings_divergent<F>(
-	size: [complex::Real; 2],
-	position: [complex::Real; 2],
+	window_size: [f32; 2],
+	window_position: [f32; 2],
 	settings: rc::Rc<cell::RefCell<configuration::GlobalSettings>>,
 	ui: &imgui::Ui,
 	// Rc<RefCell<Divergent<impl Fn(Algebraic, Algebraic) -> Algebraic>>>
@@ -72,8 +72,8 @@ where
 {
 	// Window: settings.
 	ui.window("Settings.")
-		.size(size, imgui::Condition::FirstUseEver)
-		.position(position, imgui::Condition::FirstUseEver)
+		.size(window_size, imgui::Condition::FirstUseEver)
+		.position(window_position, imgui::Condition::FirstUseEver)
 		.build(|| {
 			let current_zoom = divergent_texture.borrow().zoom.clone();
 
@@ -162,8 +162,8 @@ where
 /// 
 /// Modify a `Root`.
 pub fn show_settings_root<F, D>(
-	size: [complex::Real; 2],
-	position: [complex::Real; 2],
+	window_size: [f32; 2],
+	window_position: [f32; 2],
 	settings: rc::Rc<cell::RefCell<configuration::GlobalSettings>>,
 	ui: &imgui::Ui,
 	root_texture: rc::Rc<cell::RefCell<fractals::root::Root<F, D>>>,
@@ -176,10 +176,10 @@ where
 {
 	// Window: settings.
 	ui.window("Settings.")
-		.size(size, imgui::Condition::FirstUseEver)
-		.position(position, imgui::Condition::FirstUseEver)
+		.size(window_size, imgui::Condition::FirstUseEver)
+		.position(window_position, imgui::Condition::FirstUseEver)
 		.build(|| {
-			let current_zoom: f32 = root_texture.borrow().zoom.clone();
+			let current_zoom: complex::Real = root_texture.borrow().zoom;
 
 			ui.text("## Info");
 			ui.text(format!(
@@ -263,15 +263,15 @@ where
 
 /// Show a settings window for debug.
 pub fn show_settings_debug(
-	size: [complex::Real; 2],
-	position: [complex::Real; 2],
+	window_size: [f32; 2],
+	window_position: [f32; 2],
 	settings: rc::Rc<cell::RefCell<configuration::GlobalSettings>>,
 	ui: &imgui::Ui,
 ) -> () {
 	// Window: settings.
 	ui.window("Settings (Debug).")
-		.size(size, imgui::Condition::FirstUseEver)
-		.position(position, imgui::Condition::FirstUseEver)
+		.size(window_size, imgui::Condition::FirstUseEver)
+		.position(window_position, imgui::Condition::FirstUseEver)
 		.build(|| {
 			ui.text("# Debug.");
 

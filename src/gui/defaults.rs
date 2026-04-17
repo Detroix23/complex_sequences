@@ -152,7 +152,7 @@ pub fn launch_default() -> () {
 			match &settings_state_update.borrow().method_id {
 				0 => {},
 				1 => {
-					let viewport_update = mouse::listen(
+					let viewport_update: support::rendering::ViewportSettings = mouse::listen(
 						&ui,
 						window_size,
 						divergent_texture_update.borrow().position,

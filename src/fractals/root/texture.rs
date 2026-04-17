@@ -31,8 +31,8 @@ where
 	// Parameters.
 	pub size: [u32; 2],
 	/// Size: [width, height].
-	pub information_size: [complex::Real; 2],
-	pub scale: f32,
+	pub information_size: [f32; 2],
+	pub scale: complex::Real,
 	pub position: [complex::Real; 2],
 	pub zoom: complex::Real,
 	pub iterations: usize,
@@ -46,7 +46,7 @@ where
 	iterations_last: usize,
 	threshold_last: complex::Real,
 	method_id_last: usize,
-	scale_last: f32,
+	scale_last: complex::Real,
 	degree0_last: f64,
 
 	/// Graphics.
@@ -63,9 +63,9 @@ where
 	pub fn new(
 		function: F,
 		derivative: D,
-		information_size: [complex::Real; 2],
+		information_size: [f32; 2],
 		position: [complex::Real; 2], 
-		scale: f32,
+		scale: complex::Real,
 		zoom: complex::Real,
 		iterations: usize,
 		threshold: complex::Real,
@@ -146,11 +146,11 @@ where
     where
         Facade: backend::Facade,
     {	
-		let scale: f32 = global_settings.borrow().resolution_scale;
+		let scale: complex::Real = global_settings.borrow().resolution_scale;
 		self.scale = scale;
 		let scaled_size: [usize; 2] = [
-			(self.size[0] as f32 / scale) as usize, 
-			(self.size[1] as f32 / scale) as usize,
+			(self.size[0] as complex::Real / scale) as usize, 
+			(self.size[1] as complex::Real / scale) as usize,
 		];
 		let mut root_finder: fractals::root::maths::RootFinder<&F, &D> = fractals::root::maths::RootFinder::new(
 			&self.function, 
@@ -226,7 +226,7 @@ where
 	}
 
 	/// Display the root fractal render and rendering information.
-	fn show_textures(&self, ui: &imgui::Ui, position: [complex::Real; 2]) {
+	fn show_textures(&self, ui: &imgui::Ui, information_position: [f32; 2]) {
         let draw_list_background: imgui::DrawListMut<'_> = ui.get_background_draw_list();
 
 		// Render `Image` in the draw list.
@@ -238,7 +238,7 @@ where
 		
 		ui.window(format!("Rendering: Fractal 'Root' (method {}). ", self.method_id))
             .size(self.information_size, imgui::Condition::FirstUseEver)
-			.position(position, imgui::Condition::FirstUseEver)
+			.position(information_position, imgui::Condition::FirstUseEver)
             .build(|| {
 				if let Some(generation_time) = self.generation_time 
 					&& generation_time.as_millis() != 0
@@ -250,7 +250,7 @@ Time = {:?}ms;
 Speed = {} iterations/ ms;", 
 						self.size[0],
 						self.size[1],
-						(self.size[0] * self.size[1]) as f32 / self.scale,
+						(self.size[0] * self.size[1]) as complex::Real / self.scale,
 						self.iterations_total,
 						generation_time.as_millis(),
 						self.iterations_total as u128 / generation_time.as_millis(),
