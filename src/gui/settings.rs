@@ -15,6 +15,7 @@ use imgui;
 use complex;
 
 use crate::structures::{configuration, color};
+use crate::structures::combos::ComboMethod;
 use crate::fractals;
 use crate::fractals::textures::Fractal;
 use crate::gui;

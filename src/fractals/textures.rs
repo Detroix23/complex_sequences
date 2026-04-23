@@ -192,10 +192,17 @@ impl NewtonConverter {
 		}
 
 		if self.loss_counter > 0 {
-			eprintln!(
-				"(!) convert_root_table_to_data() `loss_counter` = {} `roots`: {:?}", 
-				self.loss_counter, self.roots
-			);
+			if self.loss_counter < 50 {
+				eprintln!(
+					"(!) convert_root_table_to_data() `loss_counter` = {} `roots`: {:?}", 
+					self.loss_counter, self.roots
+				);
+			} else {
+				eprintln!(
+					"(!) convert_root_table_to_data() `loss_counter` = {} `roots[0]`: {}", 
+					self.loss_counter, self.roots[0]
+				);
+			}
 		}
 
 		Data {

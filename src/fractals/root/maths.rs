@@ -3,8 +3,6 @@
 //! 
 //! Try to find roots of a complex function.
 
-use std::{convert, fmt};
-
 use complex;
 use complex::{Complex, ToComplex};
 
@@ -20,52 +18,6 @@ pub enum IsRoot {
 		root: complex::Algebraic,
 		iterations: usize,
 	},
-}
-
-/// # `RootMethod`.
-#[derive(PartialEq, Eq, Clone, Copy)]
-pub enum RootMethod {
-	/// Use the Newton method (`f(x)/f'(x)`)to find a root.
-	Newton,
-	/// Color map of the complex plane through the function.
-	Position
-}
-
-impl RootMethod {
-	/// Return a `Vec` of all the methods.
-	/// ```rust, no_run
-	/// 1. Newton;
-	/// 2. Position.
-	/// ```
-	pub fn list() -> Vec<RootMethod> {
-		vec![
-			RootMethod::Newton,
-			RootMethod::Position,
-		]
-	}
-
-	/// Return a `&'static str` representation of `RootMethod`, with its id.
-	fn to_static_str(self: &Self) -> &'static str {
-		match &self {
-			RootMethod::Newton => "1. Newton",
-			RootMethod::Position => "2. Position",
-		}
-	}
-}
-
-impl fmt::Display for RootMethod {
-	fn fmt(self: &Self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-		write!(formatter, "{}", match &self {
-			RootMethod::Newton => "1. Newton",
-			RootMethod::Position => "2. Position",
-		})
-	}
-}
-
-impl convert::AsRef<str> for RootMethod {
-	fn as_ref(self: &Self) -> &str {
-		&self.to_static_str()
-	}
 }
 
 /// # `RootFinder`.

@@ -29,7 +29,7 @@ const WINDOW_SIZE: [u32; 2] = [1024, 768];
 pub fn launch_default() -> () {
 	// Workers.
 	let divergent_texture = fractals::divergence::Divergent::new(
-		support::defaults::polynomial2_c,
+		|z, c| z * z + complex::ONE,
 		complex::Algebraic::new(0.0, 0.0),
 		[400.0, 100.0], 
 		[0.0, 0.0],
@@ -45,7 +45,7 @@ pub fn launch_default() -> () {
 	let divergent_texture_update = divergent_texture.clone();
 	
 	let root_texture = fractals::root::Root::new(
-		|z: complex::Algebraic| z * z * z + complex::Algebraic::new(1.0, 0.0),
+		|z: complex::Algebraic| z * z * z + complex::ONE,
 		|z: complex::Algebraic| complex::Algebraic::new(3.0, 0.0) * z * z,
 		[400.0, 100.0],
 		[0.0, 0.0],

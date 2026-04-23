@@ -203,14 +203,20 @@ where
 		// 	self.position[1],
 		// );
 
-		self.texture_id = Option::Some(rendering::render_texture(
+		let render_result: Result<imgui::TextureId, Box<dyn error::Error>> = rendering::render_texture(
 			self.texture_id, 
 			data.raw_pixels, 
 			scaled_size, 
 			gl_context, 
 			textures,
 			rendering::ColorFormat::RGB,
-		).expect("(X) fractals::divergence::texture::Divergent::register_texture() render_texture error."));
+		);
+		if let Result::Err(error) = &render_result {
+			eprintln!("(!) fractals::divergence::texture::Divergent::register_texture()
+render_texture error {}.", error);
+		}
+
+		self.texture_id = render_result.ok();
 
 		eprintln!(
 			"\r* Divergent {}: t={} zoom={} pos=({}; {}) threads={}", 

@@ -4,8 +4,10 @@
 //! Create fractals with the destination of sequence.
 
 mod maths;
+pub mod method;
 pub mod texture;
 pub mod app;
 
-pub use maths::{IsRoot, RootMethod};
+pub use maths::{IsRoot};
+pub use method::RootMethod;
 pub use texture::Root;
