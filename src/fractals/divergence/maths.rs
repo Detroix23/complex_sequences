@@ -9,16 +9,8 @@ use std::sync::mpsc;
 use complex;
 use complex::Complex;
 
-use crate::fractals::{threading, textures};
-
-/// # Divergence `State`.
-/// Tell if a function explode toward infinity or remains bounded.
-#[derive(Debug, Clone, Copy)]
-pub enum State {
-	/// Divergent: in how many `iterations` does it diverged. 
-	Divergent{ iterations: usize },
-	Stable,
-}
+use crate::structures::computations;
+use crate::fractals::{geometry, threading};
 
 /// # `Limit` of `f`. 
 /// Compute a recursive sequence `iteration` times, with z0 = `z`:
@@ -39,7 +31,7 @@ fn limit<F>(
 	f: F, 
 	threshold: complex::Real, 
 	iterations: usize,
-) -> State 
+) -> computations::State 
 where
 	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic,
 {
@@ -52,9 +44,9 @@ where
 	}
 
 	if current.absolute() <= threshold {
-		State::Stable
+		computations::State::Stable
 	} else {
-		State::Divergent { iterations: counter }
+		computations::State::Divergent { iterations: counter }
 	}
 }
 
@@ -80,17 +72,17 @@ pub fn limit_on_screen_mandelbrot<F>(
 	position: [complex::Real; 2],
 	zoom: complex::Real,
 	thread_count: usize,
-) -> Vec<Vec<State>>
+) -> Vec<Vec<computations::State>>
 where
 	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic+ Clone + Send + 'static,
 {
 	let mut threads: Vec<thread::JoinHandle<()>> = Vec::with_capacity(thread_count);
 	let (sender, receiver) = mpsc::channel();
 
-	let mut grid: Vec<Vec<State>> = Vec::with_capacity(size[1]);
+	let mut grid: Vec<Vec<computations::State>> = Vec::with_capacity(size[1]);
 	let screen_size: [complex::Real; 2] = [size[0] as complex::Real, size[1] as complex::Real];
 	
-	let mut sub_grids: Vec<Vec<Vec<State>>> = Vec::with_capacity(thread_count);
+	let mut sub_grids: Vec<Vec<Vec<computations::State>>> = Vec::with_capacity(thread_count);
 	for _ in 0..thread_count {
 		sub_grids.push(Vec::new());
 	}
@@ -105,7 +97,7 @@ where
 			let start: [usize; 2] = [0, size[1] * thread_id / thread_count];
 			let end: [usize; 2] = [size[0], size[1] * (thread_id + 1) / thread_count];
 			
-			let sub_grid: Vec<Vec<State>> = limit_on_screen_mandelbrot_part(
+			let sub_grid: Vec<Vec<computations::State>> = limit_on_screen_mandelbrot_part(
 				z0, 
 				f_local, 
 				threshold, 
@@ -117,7 +109,7 @@ where
 				zoom
 			);
 
-			let result: threading::GenerationPart<State> = threading::GenerationPart::new(
+			let result: threading::GenerationPart<computations::State> = threading::GenerationPart::new(
 				id,
 				(start, end),
 				sub_grid,
@@ -144,7 +136,7 @@ where
 
 	// Aggregate results.
 	for thread_id in 0..thread_count {
-		let sub_grid: &Vec<Vec<State>> = &sub_grids[thread_id];
+		let sub_grid: &Vec<Vec<computations::State>> = &sub_grids[thread_id];
 
 		for y in 0..sub_grid.len() {
 			grid.push(sub_grid[y].clone());
@@ -168,18 +160,18 @@ fn limit_on_screen_mandelbrot_part<F>(
 	end: [usize; 2],
 	position: [complex::Real; 2],
 	zoom: complex::Real,
-) -> Vec<Vec<State>>
+) -> Vec<Vec<computations::State>>
 where
 	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Clone + Send + 'static,
 {
 	let size: [usize; 2] = [end[0] - start[0], end[1] - start[1]];
-	let mut grid: Vec<Vec<State>> = Vec::with_capacity(size[1]);
+	let mut grid: Vec<Vec<computations::State>> = Vec::with_capacity(size[1]);
 	
 
 	for y in start[1]..end[1] {
-		let mut line: Vec<State> = Vec::with_capacity(size[0]); 
+		let mut line: Vec<computations::State> = Vec::with_capacity(size[0]); 
 		for x in start[0]..end[0] {
-			let complex_position: [complex::Real; 2] = textures::position_from_pixel(
+			let complex_position: [complex::Real; 2] = geometry::position_from_pixel(
 				[x as complex::Real, y as complex::Real], 
 				screen_size, 
 				zoom, 
@@ -223,17 +215,17 @@ pub fn limit_on_screen_julia<F>(
 	position: [complex::Real; 2],
 	zoom: complex::Real,
 	thread_count: usize,
-) -> Vec<Vec<State>>
+) -> Vec<Vec<computations::State>>
 where
 	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Clone + Send + 'static,
 {
 	let mut threads: Vec<thread::JoinHandle<()>> = Vec::with_capacity(thread_count);
 	let (sender, receiver) = mpsc::channel();
 
-	let mut grid: Vec<Vec<State>> = Vec::with_capacity(size[1]);
+	let mut grid: Vec<Vec<computations::State>> = Vec::with_capacity(size[1]);
 	let screen_size: [complex::Real; 2] = [size[0] as complex::Real, size[1] as complex::Real];
 	
-	let mut sub_grids: Vec<Vec<Vec<State>>> = Vec::with_capacity(thread_count);
+	let mut sub_grids: Vec<Vec<Vec<computations::State>>> = Vec::with_capacity(thread_count);
 	for _ in 0..thread_count {
 		sub_grids.push(Vec::new());
 	}
@@ -248,7 +240,7 @@ where
 			let start: [usize; 2] = [0, size[1] * thread_id / thread_count];
 			let end: [usize; 2] = [size[0], size[1] * (thread_id + 1) / thread_count];
 			
-			let sub_grid: Vec<Vec<State>> = limit_on_screen_julia_part(
+			let sub_grid: Vec<Vec<computations::State>> = limit_on_screen_julia_part(
 				c, 
 				f_local, 
 				threshold, 
@@ -289,7 +281,7 @@ where
 
 	// Aggregate results.
 	for thread_id in 0..thread_count {
-		let sub_grid: &Vec<Vec<State>> = &sub_grids[thread_id];
+		let sub_grid: &Vec<Vec<computations::State>> = &sub_grids[thread_id];
 
 		for y in 0..sub_grid.len() {
 			grid.push(sub_grid[y].clone());
@@ -312,17 +304,17 @@ fn limit_on_screen_julia_part<F>(
 	end: [usize; 2],
 	position: [complex::Real; 2],
 	zoom: complex::Real,
-) -> Vec<Vec<State>>
+) -> Vec<Vec<computations::State>>
 where
 	F: Fn(complex::Algebraic, complex::Algebraic) -> complex::Algebraic + Send + 'static,
 {
 	let size: [usize; 2] = [end[0] - start[0], end[1] - start[1]];
-	let mut grid: Vec<Vec<State>> = Vec::with_capacity(size[1]);
+	let mut grid: Vec<Vec<computations::State>> = Vec::with_capacity(size[1]);
 
 	for y in start[1]..end[1] {
-		let mut line: Vec<State> = Vec::with_capacity(size[0]); 
+		let mut line: Vec<computations::State> = Vec::with_capacity(size[0]); 
 		for x in start[0]..end[0] {
-			let complex_position: [complex::Real; 2] = textures::position_from_pixel(
+			let complex_position: [complex::Real; 2] = geometry::position_from_pixel(
 				[x as complex::Real, y as complex::Real], 
 				screen_size, 
 				zoom, 

@@ -6,19 +6,8 @@
 use complex;
 use complex::{Complex, ToComplex};
 
-use crate::fractals::textures;
-
-/// # `IsRoot`.
-/// Define a possible root.
-/// - `No`: no root,
-/// - `Yes`: there is root, and the root is `root`: complex::Algebraic.
-pub enum IsRoot {
-	No,
-	Yes { 
-		root: complex::Algebraic,
-		iterations: usize,
-	},
-}
+use crate::structures::computations;
+use crate::fractals::{geometry};
 
 /// # `RootFinder`.
 /// Build and store the roots of a polynomial.  
@@ -105,7 +94,7 @@ where
 	/// T(z) = f(z) / f'(z) 
 	/// ```
 	/// cf. Desmos: https://www.desmos.com/calculator/dhirelyn0y
-	fn newton_method(self: &mut Self, z0: complex::Algebraic) -> IsRoot {
+	fn newton_method(self: &mut Self, z0: complex::Algebraic) -> computations::IsRoot {
 		let mut z: complex::Algebraic = z0;
 		let mut count: usize = 0;
 		let mut current_fz: complex::Algebraic = (self.function)(z);
@@ -124,9 +113,9 @@ where
 
 		if current_fz.absolute_squared() <= self.threshold * self.threshold {
 			let reference: complex::Algebraic = self.append_root(z);
-			IsRoot::Yes{ root: reference, iterations: count }
+			computations::IsRoot::Yes{ root: reference, iterations: count }
 		} else {
-			IsRoot::No
+			computations::IsRoot::No
 		}
 	}
 
@@ -138,14 +127,14 @@ where
 	/// It is Newton's like, which is:
 	/// - `z0` is `pixel.x + i*pixel.y`,
 	/// - returns a 2D table of "arrivals" `Vec<Vec<IsRoot>>`, coordinates of the root reached.
-	pub fn limit_on_screen_newton(self: &mut Self) -> Vec<Vec<IsRoot>> {
-		let mut grid: Vec<Vec<IsRoot>> = Vec::with_capacity(self.size[0] * self.size[1]);
+	pub fn limit_on_screen_newton(self: &mut Self) -> Vec<Vec<computations::IsRoot>> {
+		let mut grid: Vec<Vec<computations::IsRoot>> = Vec::with_capacity(self.size[0] * self.size[1]);
 
 		for y in 0..self.size[1] {
-			let mut line: Vec<IsRoot> = Vec::with_capacity(self.size[0]); 
+			let mut line: Vec<computations::IsRoot> = Vec::with_capacity(self.size[0]); 
 			
 			for x in 0..self.size[0] {
-				let complex_position: [complex::Real; 2] = textures::position_from_pixel(
+				let complex_position: [complex::Real; 2] = geometry::position_from_pixel(
 					[x as complex::Real, y as complex::Real], 
 					[self.size[0] as complex::Real, self.size[1] as complex::Real], 
 					self.zoom, 
@@ -163,7 +152,7 @@ where
 		grid
 	}
 
-	/// # Color the result of each point through the `function`.
+	/// # Color the result of each point through `function`.
 	/// *Single threaded.*
 	/// 
 	/// Use `Polar` complex representation:
@@ -176,7 +165,7 @@ where
 			let mut line: Vec<complex::Polar> = Vec::with_capacity(self.size[0]); 
 			
 			for x in 0..self.size[0] {
-				let complex_position: [complex::Real; 2] = textures::position_from_pixel(
+				let complex_position: [complex::Real; 2] = geometry::position_from_pixel(
 					[x as complex::Real, y as complex::Real], 
 					[self.size[0] as complex::Real, self.size[1] as complex::Real], 
 					self.zoom, 

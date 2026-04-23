@@ -4,3 +4,4 @@
 pub mod color;
 pub mod configuration;
 pub mod combos;
+pub mod computations;

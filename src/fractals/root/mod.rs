@@ -8,6 +8,5 @@ pub mod method;
 pub mod texture;
 pub mod app;
 
-pub use maths::{IsRoot};
 pub use method::RootMethod;
 pub use texture::Root;

@@ -8,6 +8,5 @@ pub mod texture;
 pub mod app;
 pub mod method;
 
-pub use maths::State;
 pub use method::LimitMethod;
 pub use texture::Divergent;

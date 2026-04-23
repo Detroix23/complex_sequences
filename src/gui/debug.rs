@@ -9,10 +9,9 @@ use imgui;
 use glium;
 use glium::backend::Facade;
 
-use crate::structures::{color, configuration};
+use crate::structures::{color, configuration, computations};
 use crate::gui::settings;
 use crate::support::rendering;
-use crate::fractals;
 
 #[derive(Debug, Clone)]
 pub struct DebugTexture {
@@ -59,7 +58,7 @@ impl DebugTexture {
 			pixels.push(rgb.blue);
 		}
 
-		let data: fractals::textures::Data = fractals::textures::Data {
+		let data: computations::Data = computations::Data {
 			raw_pixels: pixels,
 			iterations_total: 1,
 		};

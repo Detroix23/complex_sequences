@@ -12,7 +12,7 @@ use imgui;
 use imgui_glium_renderer;
 use complex;
 
-use crate::structures::{color, configuration};
+use crate::structures::{color, configuration, computations};
 use crate::fractals;
 use crate::support::rendering;
 
@@ -35,7 +35,6 @@ where
 	/// Size: [width, height].
 	pub size: [u32; 2],
 	pub information_size: [f32; 2],
-	#[allow(dead_code)]
 	pub scale: complex::Real,
 	pub position: [complex::Real; 2],
 	pub zoom: complex::Real,
@@ -160,17 +159,7 @@ where
 		// Texture generation.
 		let generation_start: time::Instant = time::Instant::now();
 
-		let table: Vec<Vec<fractals::divergence::State>> = match self.method_id {
-			0 => fractals::divergence::maths::limit_on_screen_mandelbrot(
-				self.constant, 
-				self.function.clone(),
-				self.threshold, 
-				self.iterations, 
-				scaled_size,
-				self.position,
-				self.zoom / scale,
-				self.thread_count,
-			),
+		let table: Vec<Vec<computations::State>> = match self.method_id {
 			1 => fractals::divergence::maths::limit_on_screen_julia(
 				self.constant, 
 				self.function.clone(),
@@ -181,10 +170,19 @@ where
 				self.zoom / scale,
 				self.thread_count,
 			),
-			_ => panic!("(X) fractals::divergence_texture::Divergent::register_texture() `method_id` unknown ({}).", self.method_id),
+		 	_ => fractals::divergence::maths::limit_on_screen_mandelbrot(
+				self.constant, 
+				self.function.clone(),
+				self.threshold, 
+				self.iterations, 
+				scaled_size,
+				self.position,
+				self.zoom / scale,
+				self.thread_count,
+			),
 		};
 
-		let data: fractals::textures::Data = fractals::textures::convert_state_table_to_data(
+		let data: computations::Data = fractals::tables::state_table_to_data(
 			table, 
 			self.color_stable,
 			self.color_divergent,
@@ -235,13 +233,20 @@ render_texture error {}.", error);
 	}
 
 	/// Display the divergent fractal render and rendering information.
-	fn show_textures(&self, ui: &imgui::Ui, information_position: [f32; 2]) {
+	fn show_textures(
+		&self, 
+		ui: &imgui::Ui, 
+		information_position: [f32; 2]
+	) -> () {
         let draw_list_background: imgui::DrawListMut<'_> = ui.get_background_draw_list();
 
 		// Render `Image` in the draw list.
 		if let Some(texture_id) = self.texture_id {
 			draw_list_background
-				.add_image(texture_id, [0.0, 0.0], [self.size[0] as f32, self.size[1] as f32])
+				.add_image(texture_id, [0.0, 0.0], [
+					self.size[0] as f32, 
+					self.size[1] as f32,
+				])
 				.build();
 		}
 

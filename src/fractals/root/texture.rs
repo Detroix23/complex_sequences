@@ -10,7 +10,7 @@ use imgui;
 use imgui_glium_renderer;
 use complex;
 
-use crate::structures::{configuration, color};
+use crate::structures::{configuration, color, computations};
 use crate::fractals;
 use crate::support::rendering;
 
@@ -165,11 +165,11 @@ where
 		// Texture generation.
 		let generation_start: time::Instant = time::Instant::now();
 
-		let data = match self.method_id {
+		let data: computations::Data = match self.method_id {
 			0 => {
-				let table: Vec<Vec<fractals::root::IsRoot>> = root_finder.limit_on_screen_newton();
-				let mut newton_converter: fractals::textures::NewtonConverter;
-				newton_converter = fractals::textures::NewtonConverter::new(
+				let table: Vec<Vec<computations::IsRoot>> = root_finder.limit_on_screen_newton();
+				let mut newton_converter: fractals::tables::NewtonConverter;
+				newton_converter = fractals::tables::NewtonConverter::new(
 					root_finder.get_roots(),
 					root_finder.get_threshold(),
 					self.color_no_root,
@@ -179,31 +179,33 @@ where
 
 				newton_converter.convert(table)
 			},
-			1 => {
+			_ => {
 				let table: Vec<Vec<complex::Polar>> = root_finder.limit_on_screen_position();
-				let mut position_converter: fractals::textures::PositionConverter;
-				position_converter = fractals::textures::PositionConverter::new(self.degree0);
+				let mut position_converter: fractals::tables::PositionConverter;
+				position_converter = fractals::tables::PositionConverter::new(self.degree0);
 
 				position_converter.convert(table)
 			},
-			_ => panic!(
-				"(X) fractals::divergence::texture::Divergent::register_texture() `method_id` unknown ({}).", 
-				self.method_id
-			),
 		};
 
 		self.iterations_total = data.iterations_total;
 		self.generation_time = Option::Some(generation_start.elapsed());
 		
-		self.texture_id = Option::Some(rendering::render_texture(
+		let render_result = rendering::render_texture(
 			self.texture_id, 
 			data.raw_pixels, 
 			scaled_size, 
 			gl_context, 
 			textures,
 			rendering::ColorFormat::RGB,
-		).expect("(X) register_texture() render_texture() error."));
-		
+		);
+		if let Result::Err(error) = &render_result {
+			eprintln!("(!) fractals::root::texture::Root::register_texture()
+render_texture error {}.", error);
+		}
+
+		self.texture_id = render_result.ok();
+
 		let root_count: usize = root_finder.get_roots().len();
 		eprintln!(
 			"* Root {}: t={} zoom={} pos=({}; {}) roots={}", 

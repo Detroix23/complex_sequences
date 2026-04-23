@@ -14,6 +14,7 @@ pub trait ComboMethod:
 	fn list() -> Vec<Self>;
 
 	/// Returns the ID of the current value.
+	#[allow(dead_code)]
 	fn id(self: &Self) -> u32;
 
 	/// Return a string of the current value, with ID.
